@@ -1,0 +1,70 @@
+# Configurações do JocoTerrenos
+
+# Configurações de Banco de Dados
+database:
+  # Tipo de banco de dados: SQLITE, MYSQL, POSTGRESQL
+  type: SQLITE
+
+  # Configurações para SQLite (usado quando type=SQLITE)
+  sqlite:
+    # Nome do arquivo do banco de dados (será criado na pasta do plugin)
+    filename: terrenos.db
+
+  # Configurações para MySQL (usado quando type=MYSQL)
+  mysql:
+    host: localhost
+    port: 3306
+    database: jocoterrenos
+    username: root
+    password: senha
+    # Propriedades adicionais da conexão
+    properties:
+      useSSL: false
+      autoReconnect: true
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+
+  # Configurações para PostgreSQL (usado quando type=POSTGRESQL)
+  postgresql:
+    host: localhost
+    port: 5432
+    database: jocoterrenos
+    username: postgres
+    password: senha
+    # Schema do banco de dados
+    schema: public
+    # Propriedades adicionais da conexão
+    properties:
+      ssl: false
+      autoReconnect: true
+
+  # Configurações do Pool de Conexões (HikariCP)
+  pool:
+    # Tamanho máximo do pool
+    maximum-pool-size: 10
+    # Tamanho mínimo de conexões idle
+    minimum-idle: 2
+    # Tempo máximo de vida de uma conexão (em milissegundos)
+    maximum-lifetime: 1800000
+    # Tempo de espera para obter uma conexão (em milissegundos)
+    connection-timeout: 5000
+    # Tempo máximo que uma conexão pode ficar idle (em milissegundos)
+    idle-timeout: 600000
+
+# Configurações de Terrenos
+terrenos:
+  # Tamanho padrão de um terreno (em blocos)
+  tamanho-padrao: 10
+  # Tamanho máximo permitido
+  tamanho-maximo: 100
+  # Tamanho mínimo permitido
+  tamanho-minimo: 5
+  teleport:
+    altura-min: 0
+    altura-max: 320
+    busca:
+      max-depth: 64
+    void:
+      platform:
+        material: GLASS

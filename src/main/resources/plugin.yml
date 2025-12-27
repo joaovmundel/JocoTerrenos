@@ -1,0 +1,26 @@
+name: JocoTerrenos
+version: '1.0-SNAPSHOT'
+main: io.github.joaovmundel.jocoTerrenos.JocoTerrenos
+api-version: '1.21'
+
+commands:
+  cercar:
+    description: Coloca cercas delimitando uma área com o jogador no centro
+    usage: /cercar <área_em_m²>
+    permission: jocoterrenos.cercar
+    permission-message: Você não tem permissão para usar este comando!
+  resizecerca:
+    description: Redimensiona uma área de cercas existente
+    usage: /resizecerca <tamanho_antigo> <tamanho_novo>
+    permission: jocoterrenos.resizecerca
+    permission-message: Você não tem permissão para usar este comando!
+  removercerca:
+    description: Remove cercas de uma área
+    usage: /removercerca <tamanho>
+    permission: jocoterrenos.removercerca
+    permission-message: Você não tem permissão para usar este comando!
+  terreno:
+    description: Gerencia terrenos
+    usage: /terreno <criar|listar|info|deletar|pvp|mobs|publico>
+    permission: jocoterrenos.terreno
+    permission-message: Você não tem permissão para usar este comando!

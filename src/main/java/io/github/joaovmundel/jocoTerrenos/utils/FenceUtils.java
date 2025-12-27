@@ -1,0 +1,328 @@
+package io.github.joaovmundel.jocoTerrenos.utils;
+
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+
+public class FenceUtils {
+
+    private FenceUtils() {}
+
+    /**
+     * Coloca cercas em torno do jogador, definindo uma área quadrada com o tamanho especificado.
+     * O jogador fica no centro da área e as cercas são posicionadas na superfície.
+     *
+     * @param player O jogador que estará no centro da área
+     * @param areaM2 O tamanho do lado da área em blocos (será criada uma área quadrada)
+     */
+    public static void colocarCercas(Player player, double areaM2) {
+        if (areaM2 <= 0) {
+            player.sendMessage("§cO tamanho da área deve ser maior que zero!");
+            return;
+        }
+
+        // O valor passado é o lado do quadrado
+        int lado = (int) Math.ceil(areaM2);
+
+        Location centerLoc = player.getLocation();
+        World world = centerLoc.getWorld();
+
+        if (world == null) {
+            player.sendMessage("§cMundo inválido!");
+            return;
+        }
+
+        int centerX = centerLoc.getBlockX();
+        int centerZ = centerLoc.getBlockZ();
+
+        // Usa a função auxiliar para colocar as cercas
+        int fencesPlaced = colocarCercasPerimetro(world, centerX, centerZ, lado);
+
+        player.sendMessage("§aCercas colocadas com sucesso!");
+        player.sendMessage("§7Área: " + lado + "x" + lado + " blocos (" + (lado * lado) + "m²)");
+        player.sendMessage("§7Total de cercas colocadas: " + fencesPlaced);
+    }
+
+    /**
+     * Redimensiona uma área de cercas, removendo o perímetro antigo e criando um novo.
+     *
+     * @param centerLoc A localização central da área
+     * @param tamanhoAntigo O tamanho antigo do lado da área (ex: 10 para 10x10)
+     * @param tamanhoNovo O novo tamanho do lado da área (ex: 20 para 20x20)
+     * @return Mensagem com o resultado da operação
+     */
+    public static String resizeCercas(Location centerLoc, int tamanhoAntigo, int tamanhoNovo) {
+        if (centerLoc == null || centerLoc.getWorld() == null) {
+            return "§cLocalização inválida!";
+        }
+
+        if (tamanhoAntigo <= 0 || tamanhoNovo <= 0) {
+            return "§cOs tamanhos devem ser maiores que zero!";
+        }
+
+        if (tamanhoAntigo == tamanhoNovo) {
+            return "§cOs tamanhos são iguais! Nenhuma alteração necessária.";
+        }
+
+        World world = centerLoc.getWorld();
+        int centerX = centerLoc.getBlockX();
+        int centerZ = centerLoc.getBlockZ();
+
+        // Remove cercas do perímetro antigo
+        int cercasRemovidas = removerCercasPerimetro(world, centerX, centerZ, tamanhoAntigo);
+
+        // Coloca cercas no novo perímetro
+        int cercasColocadas = colocarCercasPerimetro(world, centerX, centerZ, tamanhoNovo);
+
+        String acao = tamanhoNovo > tamanhoAntigo ? "expandida" : "reduzida";
+
+        return "§aÁrea " + acao + " com sucesso!\n" +
+               "§7Tamanho antigo: " + tamanhoAntigo + "x" + tamanhoAntigo + " (" + (tamanhoAntigo * tamanhoAntigo) + "m²)\n" +
+               "§7Tamanho novo: " + tamanhoNovo + "x" + tamanhoNovo + " (" + (tamanhoNovo * tamanhoNovo) + "m²)\n" +
+               "§7Cercas removidas: " + cercasRemovidas + "\n" +
+               "§7Cercas colocadas: " + cercasColocadas;
+    }
+
+    /**
+     * Remove cercas de uma área quadrada.
+     *
+     * @param centerLoc A localização central da área
+     * @param tamanho O tamanho do lado da área (ex: 10 para 10x10)
+     * @return Mensagem com o resultado da operação
+     */
+    public static String removerCercas(Location centerLoc, int tamanho) {
+        if (centerLoc == null || centerLoc.getWorld() == null) {
+            return "§cLocalização inválida!";
+        }
+
+        if (tamanho <= 0) {
+            return "§cO tamanho deve ser maior que zero!";
+        }
+
+        World world = centerLoc.getWorld();
+        int centerX = centerLoc.getBlockX();
+        int centerZ = centerLoc.getBlockZ();
+
+        // Remove cercas do perímetro
+        int cercasRemovidas = removerCercasPerimetro(world, centerX, centerZ, tamanho);
+
+        return "§aCercas removidas com sucesso!\n" +
+               "§7Área: " + tamanho + "x" + tamanho + " blocos (" + (tamanho * tamanho) + "m²)\n" +
+               "§7Total de cercas removidas: " + cercasRemovidas;
+    }
+
+    /**
+     * Coloca cercas no perímetro de uma área.
+     *
+     * @param world O mundo
+     * @param centerX Coordenada X central
+     * @param centerZ Coordenada Z central
+     * @param tamanho Tamanho do lado da área
+     * @return Quantidade de cercas colocadas
+     */
+    private static int colocarCercasPerimetro(World world, int centerX, int centerZ, int tamanho) {
+        int raio = tamanho / 2;
+        int fencesPlaced = 0;
+
+        // Coloca cercas nos 4 lados do perímetro
+        for (int i = -raio; i <= raio; i++) {
+            // Lado Norte (Z negativo)
+            fencesPlaced += colocarCercaNoBloco(world, centerX + i, centerZ - raio);
+
+            // Lado Sul (Z positivo)
+            fencesPlaced += colocarCercaNoBloco(world, centerX + i, centerZ + raio);
+
+            // Lado Oeste (X negativo) - evita duplicar os cantos
+            if (i != -raio && i != raio) {
+                fencesPlaced += colocarCercaNoBloco(world, centerX - raio, centerZ + i);
+            }
+
+            // Lado Leste (X positivo) - evita duplicar os cantos
+            if (i != -raio && i != raio) {
+                fencesPlaced += colocarCercaNoBloco(world, centerX + raio, centerZ + i);
+            }
+        }
+
+        return fencesPlaced;
+    }
+
+    /**
+     * Remove cercas do perímetro de uma área.
+     *
+     * @param world O mundo
+     * @param centerX Coordenada X central
+     * @param centerZ Coordenada Z central
+     * @param tamanho Tamanho do lado da área
+     * @return Quantidade de cercas removidas
+     */
+    private static int removerCercasPerimetro(World world, int centerX, int centerZ, int tamanho) {
+        int raio = tamanho / 2;
+        int fencesRemoved = 0;
+
+        // Remove cercas nos 4 lados do perímetro
+        for (int i = -raio; i <= raio; i++) {
+            // Lado Norte (Z negativo)
+            fencesRemoved += removerCercaNoBloco(world, centerX + i, centerZ - raio);
+
+            // Lado Sul (Z positivo)
+            fencesRemoved += removerCercaNoBloco(world, centerX + i, centerZ + raio);
+
+            // Lado Oeste (X negativo) - evita duplicar os cantos
+            if (i != -raio && i != raio) {
+                fencesRemoved += removerCercaNoBloco(world, centerX - raio, centerZ + i);
+            }
+
+            // Lado Leste (X positivo) - evita duplicar os cantos
+            if (i != -raio && i != raio) {
+                fencesRemoved += removerCercaNoBloco(world, centerX + raio, centerZ + i);
+            }
+        }
+
+        return fencesRemoved;
+    }
+
+    /**
+     * Remove uma cerca em uma posição X, Z específica se for uma cerca.
+     *
+     * @param world O mundo onde a cerca será removida
+     * @param x Coordenada X
+     * @param z Coordenada Z
+     * @return 1 se a cerca foi removida, 0 caso contrário
+     */
+    private static int removerCercaNoBloco(World world, int x, int z) {
+        // Busca a superfície adequada
+        int y = encontrarSuperficie(world, x, z);
+
+        if (y == -1) {
+            return 0;
+        }
+
+        Block block = world.getBlockAt(x, y, z);
+
+        // Verifica se o bloco é uma cerca de carvalho
+        if (block.getType() == Material.OAK_FENCE) {
+            block.setType(Material.AIR);
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Coloca uma cerca em uma posição X, Z específica.
+     * Busca a superfície adequada para colocar a cerca.
+     *
+     * @param world O mundo onde a cerca será colocada
+     * @param x Coordenada X
+     * @param z Coordenada Z
+     * @return 1 se a cerca foi colocada, 0 caso contrário
+     */
+    private static int colocarCercaNoBloco(World world, int x, int z) {
+        // Busca a superfície adequada
+        int y = encontrarSuperficie(world, x, z);
+
+        if (y == -1) {
+            return 0; // Não foi possível encontrar uma superfície adequada
+        }
+
+        Block block = world.getBlockAt(x, y, z);
+
+        // Verifica se o bloco já é uma cerca
+        if (block.getType() == Material.OAK_FENCE) {
+            return 0;
+        }
+
+        // Coloca a cerca
+        block.setType(Material.OAK_FENCE);
+        return 1;
+    }
+
+    /**
+     * Encontra a superfície adequada para colocar a cerca.
+     * Procura de cima para baixo, evitando cavernas e priorizando o solo.
+     *
+     * @param world O mundo
+     * @param x Coordenada X
+     * @param z Coordenada Z
+     * @return A coordenada Y da superfície, ou -1 se não encontrar
+     */
+    private static int encontrarSuperficie(World world, int x, int z) {
+        int maxY = world.getMaxHeight() - 1;
+        int minY = world.getMinHeight();
+
+        // Começa do topo e desce até encontrar um bloco sólido
+        for (int y = maxY; y > minY; y--) {
+            Block blocoAtual = world.getBlockAt(x, y, z);
+            Block blocoAbaixo = world.getBlockAt(x, y - 1, z);
+
+            // Verifica se o bloco abaixo é sólido e o atual está vazio
+            if (isBlocoSolido(blocoAbaixo) && !isBlocoSolido(blocoAtual)) {
+                // Verifica se não é uma caverna (há céu acima)
+                if (temCeuAcima(world, x, y, z)) {
+                    return y;
+                }
+            }
+        }
+
+        // Se não encontrou com céu acima, retorna a superfície mais alta disponível
+        for (int y = maxY; y > minY; y--) {
+            Block blocoAtual = world.getBlockAt(x, y, z);
+            Block blocoAbaixo = world.getBlockAt(x, y - 1, z);
+
+            if (isBlocoSolido(blocoAbaixo) && !isBlocoSolido(blocoAtual)) {
+                return y;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Verifica se há céu/ar acima de uma determinada posição.
+     * Isso ajuda a evitar colocar cercas dentro de cavernas.
+     *
+     * @param world O mundo
+     * @param x Coordenada X
+     * @param y Coordenada Y inicial
+     * @param z Coordenada Z
+     * @return true se há céu acima, false caso contrário
+     */
+    private static boolean temCeuAcima(World world, int x, int y, int z) {
+        int maxY = world.getMaxHeight() - 1;
+        int blocosAr = 0;
+
+        // Verifica se há pelo menos 3 blocos de ar consecutivos acima
+        for (int checkY = y; checkY < maxY && checkY < y + 10; checkY++) {
+            Block block = world.getBlockAt(x, checkY, z);
+            if (!isBlocoSolido(block)) {
+                blocosAr++;
+                if (blocosAr >= 3) {
+                    return true;
+                }
+            } else {
+                blocosAr = 0;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica se um bloco é sólido.
+     *
+     * @param block O bloco a ser verificado
+     * @return true se o bloco é sólido, false caso contrário
+     */
+    private static boolean isBlocoSolido(Block block) {
+        Material material = block.getType();
+
+        // Verifica se não é ar, água, lava ou outros blocos não-sólidos
+        return material.isSolid() &&
+               material != Material.AIR &&
+               material != Material.CAVE_AIR &&
+               material != Material.VOID_AIR;
+    }
+
+}
