@@ -27,19 +27,22 @@ public class TerrenoRepository {
      */
     public Optional<Terreno> create(Terreno terreno) {
         String sql = """
-            INSERT INTO terrenos (dono_uuid, location, size, pvp, mobs, public_access)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO terrenos (dono_uuid, name, db_name_key, location, size, pvp, mobs, public_access)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = databaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, terreno.getDonoUUID());
-            stmt.setString(2, terreno.getLocation());
-            stmt.setInt(3, terreno.getSize());
-            stmt.setBoolean(4, terreno.getPvp());
-            stmt.setBoolean(5, terreno.getMobs());
-            stmt.setBoolean(6, terreno.getPublicAccess());
+            stmt.setString(2, terreno.getName());
+            // db_name_key = ownerUUID + "+" + lower(name)
+            stmt.setString(3, terreno.getDonoUUID() + "+" + terreno.getName().toLowerCase());
+            stmt.setString(4, terreno.getLocation());
+            stmt.setInt(5, terreno.getSize());
+            stmt.setBoolean(6, terreno.getPvp());
+            stmt.setBoolean(7, terreno.getMobs());
+            stmt.setBoolean(8, terreno.getPublicAccess());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -144,7 +147,7 @@ public class TerrenoRepository {
     public boolean update(Terreno terreno) {
         String sql = """
             UPDATE terrenos
-            SET dono_uuid = ?, location = ?, size = ?, pvp = ?, mobs = ?, public_access = ?, updated_at = CURRENT_TIMESTAMP
+            SET dono_uuid = ?, name = ?, db_name_key = ?, location = ?, size = ?, pvp = ?, mobs = ?, public_access = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         """;
 
@@ -152,12 +155,14 @@ public class TerrenoRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, terreno.getDonoUUID());
-            stmt.setString(2, terreno.getLocation());
-            stmt.setInt(3, terreno.getSize());
-            stmt.setBoolean(4, terreno.getPvp());
-            stmt.setBoolean(5, terreno.getMobs());
-            stmt.setBoolean(6, terreno.getPublicAccess());
-            stmt.setLong(7, terreno.getId());
+            stmt.setString(2, terreno.getName());
+            stmt.setString(3, terreno.getDonoUUID() + "+" + terreno.getName().toLowerCase());
+            stmt.setString(4, terreno.getLocation());
+            stmt.setInt(5, terreno.getSize());
+            stmt.setBoolean(6, terreno.getPvp());
+            stmt.setBoolean(7, terreno.getMobs());
+            stmt.setBoolean(8, terreno.getPublicAccess());
+            stmt.setLong(9, terreno.getId());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -342,12 +347,64 @@ public class TerrenoRepository {
     }
 
     /**
+     * Busca um terreno pelo nomeKey (chave de nome única)
+     */
+    public Optional<Terreno> findByNameKey(String dbNameKey) {
+        String sql = "SELECT * FROM terrenos WHERE db_name_key = ?";
+
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, dbNameKey);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Terreno terreno = mapResultSetToTerreno(rs);
+                    terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
+                    return Optional.of(terreno);
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao buscar terreno por nomeKey: " + dbNameKey, e);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Verifica se um terreno com o mesmo dono e nome (ignorando maiúsculas/minúsculas) já existe
+     */
+    public boolean existsByOwnerAndNameIgnoreCase(String donoUUID, String nome) {
+        String sql = "SELECT COUNT(1) FROM terrenos WHERE dono_uuid = ? AND LOWER(name) = LOWER(?)";
+
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, donoUUID);
+            stmt.setString(2, nome);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao verificar existência de nome: " + nome + " para dono: " + donoUUID, e);
+        }
+
+        return false;
+    }
+
+    /**
      * Mapeia um ResultSet para um objeto Terreno
      */
     private Terreno mapResultSetToTerreno(ResultSet rs) throws SQLException {
         Terreno terreno = new Terreno();
         terreno.setId(rs.getLong("id"));
         terreno.setDonoUUID(rs.getString("dono_uuid"));
+        terreno.setName(rs.getString("name"));
         terreno.setLocation(rs.getString("location"));
         terreno.setSize(rs.getInt("size"));
         terreno.setPvp(rs.getBoolean("pvp"));
@@ -356,5 +413,4 @@ public class TerrenoRepository {
         return terreno;
     }
 }
-
 

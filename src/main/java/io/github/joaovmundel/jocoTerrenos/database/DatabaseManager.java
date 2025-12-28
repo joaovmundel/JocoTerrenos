@@ -159,35 +159,8 @@ public class DatabaseManager {
                     CREATE TABLE IF NOT EXISTS terrenos (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         dono_uuid VARCHAR(36) NOT NULL,
-                        location TEXT NOT NULL,
-                        size INTEGER NOT NULL,
-                        pvp BOOLEAN DEFAULT FALSE,
-                        mobs BOOLEAN DEFAULT FALSE,
-                        public_access BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """;
-            } else if (databaseType == DatabaseType.MYSQL) {
-                createTerrenosTable = """
-                    CREATE TABLE IF NOT EXISTS terrenos (
-                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                        dono_uuid VARCHAR(36) NOT NULL,
-                        location TEXT NOT NULL,
-                        size INT NOT NULL,
-                        pvp BOOLEAN DEFAULT FALSE,
-                        mobs BOOLEAN DEFAULT FALSE,
-                        public_access BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                        INDEX idx_dono_uuid (dono_uuid)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """;
-            } else { // PostgreSQL
-                createTerrenosTable = """
-                    CREATE TABLE IF NOT EXISTS terrenos (
-                        id BIGSERIAL PRIMARY KEY,
-                        dono_uuid VARCHAR(36) NOT NULL,
+                        name TEXT,
+                        db_name_key TEXT,
                         location TEXT NOT NULL,
                         size INTEGER NOT NULL,
                         pvp BOOLEAN DEFAULT FALSE,
@@ -196,11 +169,48 @@ public class DatabaseManager {
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
-                    CREATE INDEX IF NOT EXISTS idx_dono_uuid ON terrenos(dono_uuid);
                 """;
+                stmt.execute(createTerrenosTable);
+                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_name_key ON terrenos(db_name_key)");
+            } else if (databaseType == DatabaseType.MYSQL) {
+                createTerrenosTable = """
+                    CREATE TABLE IF NOT EXISTS terrenos (
+                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                        dono_uuid VARCHAR(36) NOT NULL,
+                        name VARCHAR(255),
+                        db_name_key VARCHAR(300),
+                        location TEXT NOT NULL,
+                        size INT NOT NULL,
+                        pvp BOOLEAN DEFAULT FALSE,
+                        mobs BOOLEAN DEFAULT FALSE,
+                        public_access BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                        UNIQUE KEY uk_name_key (db_name_key),
+                        INDEX idx_dono_uuid (dono_uuid)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """;
+                stmt.execute(createTerrenosTable);
+            } else { // PostgreSQL
+                createTerrenosTable = """
+                    CREATE TABLE IF NOT EXISTS terrenos (
+                        id BIGSERIAL PRIMARY KEY,
+                        dono_uuid VARCHAR(36) NOT NULL,
+                        name VARCHAR(255),
+                        db_name_key VARCHAR(300),
+                        location TEXT NOT NULL,
+                        size INTEGER NOT NULL,
+                        pvp BOOLEAN DEFAULT FALSE,
+                        mobs BOOLEAN DEFAULT FALSE,
+                        public_access BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """;
+                stmt.execute(createTerrenosTable);
+                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS uk_name_key ON terrenos(db_name_key)");
+                stmt.execute("CREATE INDEX IF NOT EXISTS idx_dono_uuid ON terrenos(dono_uuid)");
             }
-
-            stmt.execute(createTerrenosTable);
 
             // Tabela de Membros do Terreno
             String createMembersTable;

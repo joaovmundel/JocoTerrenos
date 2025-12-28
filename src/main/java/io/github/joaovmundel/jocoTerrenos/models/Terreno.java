@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class Terreno {
     private Long id;
+    private String name;
     private String donoUUID;
     private String location;
     private Integer size;

@@ -2,6 +2,7 @@ name: JocoTerrenos
 version: '1.0-SNAPSHOT'
 main: io.github.joaovmundel.jocoTerrenos.JocoTerrenos
 api-version: '1.21'
+depend: [Vault]
 
 commands:
   cercar:
@@ -21,6 +22,6 @@ commands:
     permission-message: Você não tem permissão para usar este comando!
   terreno:
     description: Gerencia terrenos
-    usage: /terreno <criar|listar|info|deletar|pvp|mobs|publico>
+    usage: /terreno <comprar|listar|info|deletar|pvp|mobs|publico|tp>
     permission: jocoterrenos.terreno
     permission-message: Você não tem permissão para usar este comando!

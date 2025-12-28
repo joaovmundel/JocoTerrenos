@@ -4,23 +4,25 @@ import io.github.joaovmundel.jocoTerrenos.JocoTerrenos;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-public class TerrenoCommand implements CommandExecutor {
+public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
-    private final JocoTerrenos plugin;
     private final TerrenoService terrenoService;
 
     public TerrenoCommand(JocoTerrenos plugin) {
-        this.plugin = plugin;
         this.terrenoService = plugin.getTerrenoService();
     }
 
@@ -37,10 +39,9 @@ public class TerrenoCommand implements CommandExecutor {
         }
 
         String subCommand = args[0].toLowerCase();
-
         switch (subCommand) {
-            case "criar":
-                return handleCriar(player, args);
+            case "comprar":
+                return handleComprar(player, args);
             case "listar":
                 return handleListar(player);
             case "info":
@@ -55,23 +56,25 @@ public class TerrenoCommand implements CommandExecutor {
                 return handleTogglePublico(player, args);
             case "tp":
                 return handleTp(player, args);
+            case "preco":
+                return handlePreco(player, args);
             default:
                 sendHelp(player);
                 return true;
         }
     }
 
-    private boolean handleCriar(Player player, String[] args) {
-        if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno criar <tamanho>");
-            player.sendMessage("§7Exemplo: /terreno criar 10");
+    private boolean handleComprar(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("§cUso: /terreno comprar <tamanho> <nome>");
+            player.sendMessage("§7Exemplo: /terreno comprar 10 casa");
             return true;
         }
 
         try {
             int tamanho = Integer.parseInt(args[1]);
+            String nome = joinArgs(args, 2);
 
-            // Valida tamanho usando o service
             if (tamanho < terrenoService.getTamanhoMinimo()) {
                 player.sendMessage("§cTamanho mínimo: " + terrenoService.getTamanhoMinimo());
                 return true;
@@ -82,27 +85,35 @@ public class TerrenoCommand implements CommandExecutor {
                 return true;
             }
 
-            // Cria o terreno usando o service
-            Optional<Terreno> created = terrenoService.criarTerreno(player, tamanho);
+            double custo = terrenoService.calcularCustoTerreno(tamanho);
+            player.sendMessage("§7Preço do terreno: §e" + String.format("%.2f", custo));
+
+            Optional<Terreno> created = terrenoService.criarTerreno(player, tamanho, nome);
 
             if (created.isPresent()) {
-                // Coloca as cercas
                 FenceUtils.colocarCercas(player, tamanho);
-
                 Terreno terreno = created.get();
-                player.sendMessage("§aTereno criado com sucesso!");
-                player.sendMessage("§7ID: " + terreno.getId());
+                player.sendMessage("§aTerreno comprado com sucesso!");
+                player.sendMessage("§77Dono: §f" + player.getName());
+                player.sendMessage("§77Terreno: §f" + terreno.getName());
                 player.sendMessage("§7Tamanho: " + tamanho + "x" + tamanho);
-                player.sendMessage("§7Localização: " + terreno.getLocation());
             } else {
-                player.sendMessage("§cErro ao criar terreno!");
+                player.sendMessage("§cNão foi possível comprar o terreno. Verifique saldo, nome único e parâmetros.");
             }
-
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um número válido!");
+            player.sendMessage("§cPor favor, insira um número válido para tamanho!");
         }
 
         return true;
+    }
+
+    private String joinArgs(String[] args, int start) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = start; i < args.length; i++) {
+            if (i > start) sb.append(' ');
+            sb.append(args[i]);
+        }
+        return sb.toString();
     }
 
     private boolean handleListar(Player player) {
@@ -131,33 +142,38 @@ public class TerrenoCommand implements CommandExecutor {
 
     private boolean handleInfo(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno info <id>");
-            return true;
-        }
-
-        try {
-            Long id = Long.parseLong(args[1]);
-            Optional<Terreno> terreno = terrenoService.buscarTerreno(id);
-
-            if (terreno.isEmpty()) {
-                player.sendMessage("§cTerreno não encontrado!");
+            // Info do terreno atual
+            Optional<Terreno> atual = terrenoService.buscarTerrenoAtual(player);
+            if (atual.isEmpty()) {
+                player.sendMessage("§eVocê não está em nenhum terreno no momento.");
                 return true;
             }
-
-            Terreno t = terreno.get();
-            player.sendMessage("§a§l=== Informações do Terreno #" + t.getId() + " ===");
-            player.sendMessage("§7Tamanho: §f" + t.getSize() + "x" + t.getSize());
-            player.sendMessage("§7Localização: §f" + t.getLocation());
-            player.sendMessage("§7PvP: " + (t.getPvp() ? "§aHabilitado" : "§cDesabilitado"));
-            player.sendMessage("§7Mobs: " + (t.getMobs() ? "§aHabilitado" : "§cDesabilitado"));
-            player.sendMessage("§7Acesso Público: " + (t.getPublicAccess() ? "§aSim" : "§cNão"));
-            player.sendMessage("§7Membros: §f" + t.getMembers().size());
-
-        } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um ID válido!");
+            Terreno t = atual.get();
+            exibirInfo(player, t);
+            return true;
         }
-
+        String nome = joinArgs(args, 1);
+        String donoUUID = player.getUniqueId().toString();
+        Optional<Terreno> terreno = terrenoService.buscarTerrenoPorNome(donoUUID, nome);
+        if (terreno.isEmpty()) {
+            player.sendMessage("§cTerreno não encontrado com esse nome.");
+            return true;
+        }
+        exibirInfo(player, terreno.get());
         return true;
+    }
+
+    private void exibirInfo(Player player, Terreno t) {
+        String donoNome = Bukkit.getOfflinePlayer(java.util.UUID.fromString(t.getDonoUUID())).getName();
+        player.sendMessage("§a§l=== Informações do Terreno ===");
+        player.sendMessage("§77Dono: §f" + (donoNome != null ? donoNome : t.getDonoUUID()));
+        player.sendMessage("§77Terreno: §f" + t.getName());
+        player.sendMessage("§7Tamanho: §f" + t.getSize() + "x" + t.getSize());
+        player.sendMessage("§7Localização: §f" + t.getLocation());
+        player.sendMessage("§7PvP: " + (t.getPvp() ? "§aHabilitado" : "§cDesabilitado"));
+        player.sendMessage("§7Mobs: " + (t.getMobs() ? "§aHabilitado" : "§cDesabilitado"));
+        player.sendMessage("§7Acesso Público: " + (t.getPublicAccess() ? "§aSim" : "§cNão"));
+        player.sendMessage("§7Membros: §f" + t.getMembers().size());
     }
 
     private boolean handleDeletar(Player player, String[] args) {
@@ -321,16 +337,97 @@ public class TerrenoCommand implements CommandExecutor {
         return true;
     }
 
+    private boolean handlePreco(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage("§cUso: /terreno preco <tamanho>");
+            player.sendMessage("§7Exemplo: /terreno preco 10");
+            return true;
+        }
+        try {
+            int tamanho = Integer.parseInt(args[1]);
+            if (tamanho < terrenoService.getTamanhoMinimo()) {
+                player.sendMessage("§cTamanho mínimo: " + terrenoService.getTamanhoMinimo());
+                return true;
+            }
+            if (tamanho > terrenoService.getTamanhoMaximo()) {
+                player.sendMessage("§cTamanho máximo: " + terrenoService.getTamanhoMaximo());
+                return true;
+            }
+            double custo = terrenoService.calcularCustoTerreno(tamanho);
+            player.sendMessage("§aPreço do terreno " + tamanho + "x" + tamanho + ": §e" + String.format("%.2f", custo));
+        } catch (NumberFormatException e) {
+            player.sendMessage("§cPor favor, insira um número válido para tamanho!");
+        }
+        return true;
+    }
+
     private void sendHelp(Player player) {
         player.sendMessage("§a§l=== Comandos de Terreno ===");
-        player.sendMessage("§7/terreno criar <tamanho> §f- Cria um terreno");
+        player.sendMessage("§7/terreno comprar <tamanho> <nome> §f- Compra um terreno");
+        player.sendMessage("§7/terreno preco <tamanho> §f- Mostra o preço de um terreno NxN");
         player.sendMessage("§7/terreno listar §f- Lista seus terrenos");
-        player.sendMessage("§7/terreno info <id> §f- Informações do terreno");
+        player.sendMessage("§7/terreno info [nome] §f- Informações do terreno atual ou pelo nome");
         player.sendMessage("§7/terreno deletar <id> §f- Deleta um terreno");
         player.sendMessage("§7/terreno pvp <id> §f- Alterna PvP");
         player.sendMessage("§7/terreno mobs <id> §f- Alterna Mobs");
         player.sendMessage("§7/terreno publico <id> §f- Alterna acesso público");
         player.sendMessage("§7/terreno tp <id> §f- Teleporta para um local seguro dentro do terreno");
     }
-}
 
+    @Override
+    public java.util.List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        java.util.List<String> suggestions = new ArrayList<>();
+        if (!(sender instanceof Player player)) {
+            return suggestions;
+        }
+        String playerUUID = player.getUniqueId().toString();
+        if (args.length == 1) {
+            String prefix = args[0].toLowerCase();
+            java.util.List<String> subs = java.util.Arrays.asList("comprar", "preco", "listar", "info", "deletar", "pvp", "mobs", "publico", "tp");
+            suggestions = subs.stream().filter(s -> s.startsWith(prefix)).collect(Collectors.toList());
+        } else if (args.length == 2) {
+            String sub = args[0].toLowerCase();
+            String prefix = args[1].toLowerCase();
+            switch (sub) {
+                case "comprar":
+                case "preco":
+                    // Suggest common sizes
+                    for (int sz : new int[]{5, 10, 15, 20, 25, 30, 50, 100}) {
+                        String s = String.valueOf(sz);
+                        if (s.startsWith(prefix)) suggestions.add(s);
+                    }
+                    break;
+                case "info":
+                    // Suggest terrain names owned by player
+                    java.util.List<Terreno> terrenos = terrenoService.listarTerrenosDoJogador(playerUUID);
+                    for (Terreno t : terrenos) {
+                        String name = t.getName();
+                        if (name != null && name.toLowerCase().startsWith(prefix)) suggestions.add(name);
+                    }
+                    break;
+                case "deletar":
+                case "pvp":
+                case "mobs":
+                case "publico":
+                case "tp":
+                    // Suggest IDs of player's terrains
+                    for (Terreno t : terrenoService.listarTerrenosDoJogador(playerUUID)) {
+                        String idStr = String.valueOf(t.getId());
+                        if (idStr.startsWith(prefix)) suggestions.add(idStr);
+                    }
+                    break;
+            }
+        } else if (args.length >= 3) {
+            String sub = args[0].toLowerCase();
+            if ("comprar".equals(sub)) {
+                // For name argument: suggest no spaces, but we can hint with existing names to avoid duplicates
+                String typed = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)).toLowerCase();
+                for (Terreno t : terrenoService.listarTerrenosDoJogador(playerUUID)) {
+                    String name = t.getName();
+                    if (name != null && name.toLowerCase().startsWith(typed)) suggestions.add(name);
+                }
+            }
+        }
+        return suggestions;
+    }
+}

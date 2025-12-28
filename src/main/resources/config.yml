@@ -60,6 +60,10 @@ terrenos:
   tamanho-maximo: 100
   # Tamanho mínimo permitido
   tamanho-minimo: 5
+  # Preço por bloco para compra de terreno
+  block-price: 1000.0
+  # Material das cercas colocadas (ex.: OAK_FENCE, SPRUCE_FENCE, NETHER_BRICK_FENCE)
+  fence-material: OAK_FENCE
   teleport:
     altura-min: 0
     altura-max: 320

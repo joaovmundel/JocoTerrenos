@@ -1,14 +1,47 @@
 package io.github.joaovmundel.jocoTerrenos.utils;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+
+import java.util.EnumSet;
 
 public class FenceUtils {
 
     private FenceUtils() {}
+
+    private static final EnumSet<Material> FENCE_TYPES = EnumSet.of(
+            Material.OAK_FENCE,
+            Material.SPRUCE_FENCE,
+            Material.BIRCH_FENCE,
+            Material.JUNGLE_FENCE,
+            Material.ACACIA_FENCE,
+            Material.DARK_OAK_FENCE,
+            Material.CRIMSON_FENCE,
+            Material.WARPED_FENCE,
+            Material.MANGROVE_FENCE,
+            Material.BAMBOO_FENCE,
+            Material.NETHER_BRICK_FENCE
+    );
+    private static final EnumSet<Material> FENCE_GATES = EnumSet.of(
+            Material.OAK_FENCE_GATE,
+            Material.SPRUCE_FENCE_GATE,
+            Material.BIRCH_FENCE_GATE,
+            Material.JUNGLE_FENCE_GATE,
+            Material.ACACIA_FENCE_GATE,
+            Material.DARK_OAK_FENCE_GATE,
+            Material.CRIMSON_FENCE_GATE,
+            Material.WARPED_FENCE_GATE,
+            Material.MANGROVE_FENCE_GATE,
+            Material.BAMBOO_FENCE_GATE
+    );
+    private static boolean isFence(Material material) {
+        return FENCE_TYPES.contains(material) || FENCE_GATES.contains(material);
+    }
 
     /**
      * Coloca cercas em torno do jogador, definindo uma área quadrada com o tamanho especificado.
@@ -83,6 +116,20 @@ public class FenceUtils {
                "§7Tamanho novo: " + tamanhoNovo + "x" + tamanhoNovo + " (" + (tamanhoNovo * tamanhoNovo) + "m²)\n" +
                "§7Cercas removidas: " + cercasRemovidas + "\n" +
                "§7Cercas colocadas: " + cercasColocadas;
+    }
+
+    public static void removeFences(Location centerLocation, int size){
+        if (centerLocation == null || centerLocation.getWorld() == null) {
+            return;
+        }
+        if (size <= 0) {
+            return;
+        }
+        World world = centerLocation.getWorld();
+        int centerX = centerLocation.getBlockX();
+        int centerZ = centerLocation.getBlockZ();
+        // Usa exatamente a mesma lógica de perímetro e descoberta de superfície
+        removerCercasPerimetro(world, centerX, centerZ, size);
     }
 
     /**
@@ -192,22 +239,34 @@ public class FenceUtils {
      * @return 1 se a cerca foi removida, 0 caso contrário
      */
     private static int removerCercaNoBloco(World world, int x, int z) {
-        // Busca a superfície adequada
         int y = encontrarSuperficie(world, x, z);
-
         if (y == -1) {
             return 0;
         }
-
-        Block block = world.getBlockAt(x, y, z);
-
-        // Verifica se o bloco é uma cerca de carvalho
-        if (block.getType() == Material.OAK_FENCE) {
-            block.setType(Material.AIR);
-            return 1;
+        int removed = 0;
+        int maxY = world.getMaxHeight() - 1;
+        int minY = world.getMinHeight();
+        Material fenceMat = getConfiguredFenceMaterial();
+        Block atSurface = world.getBlockAt(x, y, z);
+        if (atSurface.getType() == fenceMat) {
+            atSurface.setType(Material.AIR);
+            removed++;
         }
-
-        return 0;
+        for (int yy = y + 1; yy <= Math.min(y + 3, maxY); yy++) {
+            Block above = world.getBlockAt(x, yy, z);
+            if (above.getType() == fenceMat) {
+                above.setType(Material.AIR);
+                removed++;
+            }
+        }
+        for (int yy = y - 1; yy >= minY; yy--) {
+            Block below = world.getBlockAt(x, yy, z);
+            if (below.getType() == fenceMat) {
+                below.setType(Material.AIR);
+                removed++;
+            }
+        }
+        return removed;
     }
 
     /**
@@ -220,7 +279,6 @@ public class FenceUtils {
      * @return 1 se a cerca foi colocada, 0 caso contrário
      */
     private static int colocarCercaNoBloco(World world, int x, int z) {
-        // Busca a superfície adequada
         int y = encontrarSuperficie(world, x, z);
 
         if (y == -1) {
@@ -228,14 +286,15 @@ public class FenceUtils {
         }
 
         Block block = world.getBlockAt(x, y, z);
+        Material fenceMat = getConfiguredFenceMaterial();
 
         // Verifica se o bloco já é uma cerca
-        if (block.getType() == Material.OAK_FENCE) {
+        if (block.getType() == fenceMat) {
             return 0;
         }
 
         // Coloca a cerca
-        block.setType(Material.OAK_FENCE);
+        block.setType(fenceMat);
         return 1;
     }
 
@@ -323,6 +382,17 @@ public class FenceUtils {
                material != Material.AIR &&
                material != Material.CAVE_AIR &&
                material != Material.VOID_AIR;
+    }
+
+    private static Material getConfiguredFenceMaterial() {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("JocoTerrenos");
+        if (plugin == null) return Material.OAK_FENCE;
+        String matName = plugin.getConfig().getString("terrenos.fence-material", "OAK_FENCE");
+        try {
+            return Material.valueOf(matName.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return Material.OAK_FENCE;
+        }
     }
 
 }

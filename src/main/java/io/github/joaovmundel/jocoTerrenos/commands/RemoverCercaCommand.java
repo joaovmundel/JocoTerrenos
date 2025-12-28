@@ -26,16 +26,9 @@ public class RemoverCercaCommand implements CommandExecutor {
 
         try {
             int tamanho = Integer.parseInt(args[0]);
-
-            // Usa a localização atual do jogador como centro
             Location centerLoc = player.getLocation();
-
-            // Chama a função de remover cercas
             String resultado = FenceUtils.removerCercas(centerLoc, tamanho);
-
-            // Envia o resultado para o jogador
             player.sendMessage(resultado);
-
         } catch (NumberFormatException e) {
             player.sendMessage("§cPor favor, insira um número válido!");
             return true;
@@ -44,4 +37,3 @@ public class RemoverCercaCommand implements CommandExecutor {
         return true;
     }
 }
-
