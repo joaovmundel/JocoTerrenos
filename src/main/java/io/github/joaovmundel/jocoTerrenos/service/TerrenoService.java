@@ -1,5 +1,6 @@
 package io.github.joaovmundel.jocoTerrenos.service;
 
+import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
 import io.github.joaovmundel.jocoTerrenos.utils.SafeLocationUtils;
@@ -20,36 +21,6 @@ public class TerrenoService {
     public TerrenoService(TerrenoRepository repository, FileConfiguration config) {
         this.repository = repository;
         this.config = config;
-    }
-
-    /**
-     * Cria um novo terreno para o jogador
-     */
-    public Optional<Terreno> criarTerreno(Player player, int tamanho) {
-        // Valida tamanho mínimo
-        int tamanhoMinimo = config.getInt("terrenos.tamanho-minimo", 5);
-        if (tamanho < tamanhoMinimo) {
-            return Optional.empty();
-        }
-
-        // Valida tamanho máximo
-        int tamanhoMaximo = config.getInt("terrenos.tamanho-maximo", 100);
-        if (tamanho > tamanhoMaximo) {
-            return Optional.empty();
-        }
-
-        Location loc = player.getLocation();
-        String location = formatarLocalizacao(loc);
-
-        Terreno terreno = new Terreno();
-        terreno.setDonoUUID(player.getUniqueId().toString());
-        terreno.setLocation(location);
-        terreno.setSize(tamanho);
-        terreno.setPvp(false);
-        terreno.setMobs(true);
-        terreno.setPublicAccess(false);
-
-        return repository.create(terreno);
     }
 
     /**
@@ -108,6 +79,12 @@ public class TerrenoService {
         return created;
     }
 
+    public boolean tamanhoValido(int tamanho) {
+        int tamanhoMinimo = getTamanhoMinimo();
+        int tamanhoMaximo = getTamanhoMaximo();
+        return tamanho >= tamanhoMinimo && tamanho <= tamanhoMaximo;
+    }
+
     public double calcularCustoTerreno(int tamanho) {
         double blockPrice = config.getDouble("terrenos.block-price", 1000.0);
         return (double) tamanho * (double) tamanho * blockPrice;
@@ -123,8 +100,9 @@ public class TerrenoService {
     /**
      * Busca um terreno por ID
      */
-    public Optional<Terreno> buscarTerreno(Long id) {
-        return repository.findById(id);
+    public Terreno buscarTerreno(Long id) throws TerrenoNotFoundException {
+        Optional<Terreno> optionalTerreno = repository.findById(id);
+        return optionalTerreno.orElseThrow(() -> new TerrenoNotFoundException("Ocorreu um erro ao buscar o terreno com ID " + id + "."));
     }
 
     /**
@@ -139,18 +117,18 @@ public class TerrenoService {
     /**
      * Busca o terreno atual do jogador
      */
-    public Optional<Terreno> buscarTerrenoAtual(Player player) {
+    public Terreno buscarTerrenoAtual(Player player) throws TerrenoNotFoundException {
         Location playerLoc = player.getLocation();
-        List<Terreno> meusTerrenos = repository.findByDonoUUID(player.getUniqueId().toString());
-        for (Terreno t : meusTerrenos) {
+        List<Terreno> terrenos = repository.findAll();
+        for (Terreno t : terrenos) {
             Location center = parsearLocalizacao(t.getLocation());
             if (center == null) continue;
             int size = t.getSize();
             if (estaDentroDaArea(playerLoc, center, size)) {
-                return Optional.of(t);
+                return t;
             }
         }
-        return Optional.empty();
+        throw new TerrenoNotFoundException("Nenhum terreno encontrado.");
     }
 
     /**

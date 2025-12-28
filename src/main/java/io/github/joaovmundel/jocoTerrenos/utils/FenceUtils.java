@@ -39,9 +39,6 @@ public class FenceUtils {
             Material.MANGROVE_FENCE_GATE,
             Material.BAMBOO_FENCE_GATE
     );
-    private static boolean isFence(Material material) {
-        return FENCE_TYPES.contains(material) || FENCE_GATES.contains(material);
-    }
 
     /**
      * Coloca cercas em torno do jogador, definindo uma área quadrada com o tamanho especificado.
@@ -116,20 +113,6 @@ public class FenceUtils {
                "§7Tamanho novo: " + tamanhoNovo + "x" + tamanhoNovo + " (" + (tamanhoNovo * tamanhoNovo) + "m²)\n" +
                "§7Cercas removidas: " + cercasRemovidas + "\n" +
                "§7Cercas colocadas: " + cercasColocadas;
-    }
-
-    public static void removeFences(Location centerLocation, int size){
-        if (centerLocation == null || centerLocation.getWorld() == null) {
-            return;
-        }
-        if (size <= 0) {
-            return;
-        }
-        World world = centerLocation.getWorld();
-        int centerX = centerLocation.getBlockX();
-        int centerZ = centerLocation.getBlockZ();
-        // Usa exatamente a mesma lógica de perímetro e descoberta de superfície
-        removerCercasPerimetro(world, centerX, centerZ, size);
     }
 
     /**
