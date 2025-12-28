@@ -11,15 +11,18 @@ public class JocoLogging {
     private String className;
 
     public void info(String message) {
-        logging.info("[JocoTerrenos-" + className + "] " + message);
+        logging.info("[JocoTerrenos] " + className);
+        logging.info("[JocoTerrenos] " + message);
     }
 
     public void severe(String message) {
-        logging.severe("[JocoTerrenos-" + className + "] " + message);
+        logging.severe("[JocoTerrenos] " + className);
+        logging.severe("[JocoTerrenos] " + message);
     }
 
     public void warning(String message) {
-        logging.warning("[JocoTerrenos-" + className + "] " + message);
+        logging.warning("[JocoTerrenos] " + className);
+        logging.warning("[JocoTerrenos] " + message);
     }
 
 }

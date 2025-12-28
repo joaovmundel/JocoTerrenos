@@ -3,6 +3,7 @@ package io.github.joaovmundel.jocoTerrenos.service;
 import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
+import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
 import io.github.joaovmundel.jocoTerrenos.utils.SafeLocationUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -62,7 +63,7 @@ public class TerrenoService {
         }
         // Cria terreno
         Location loc = player.getLocation();
-        String location = formatarLocalizacao(loc);
+        String location = LocationUtils.formatarLocalizacao(loc);
         Terreno terreno = new Terreno();
         terreno.setDonoUUID(donoUUID);
         terreno.setName(nomeTrim);
@@ -121,7 +122,7 @@ public class TerrenoService {
         Location playerLoc = player.getLocation();
         List<Terreno> terrenos = repository.findAll();
         for (Terreno t : terrenos) {
-            Location center = parsearLocalizacao(t.getLocation());
+            Location center = LocationUtils.parsearLocalizacao(t.getLocation());
             if (center == null) continue;
             int size = t.getSize();
             if (estaDentroDaArea(playerLoc, center, size)) {
@@ -224,47 +225,30 @@ public class TerrenoService {
         return repository.update(t);
     }
 
-    /**
-     * Formata a localização para string
-     */
-    private String formatarLocalizacao(Location loc) {
-        return String.format("%s:%.2f:%.2f:%.2f",
-                loc.getWorld() != null ? loc.getWorld().getName() : "world",
-                loc.getX(),
-                loc.getY(),
-                loc.getZ()
-        );
+    public Terreno getCurrentTerreno(Player p) throws TerrenoNotFoundException {
+        List<Terreno> terrenos = repository.findAll();
+        Location playerLoc = p.getLocation();
+        for (Terreno t : terrenos) {
+            double playerX = playerLoc.getX();
+            double playerZ = playerLoc.getZ();
+            Double[] boundaries = findBoundaries(t);
+            if (playerX >= boundaries[0] && playerX <= boundaries[1]
+                    && playerZ >= boundaries[2] && playerZ <= boundaries[3]) {
+                return t;
+            }
+        }
+        throw new TerrenoNotFoundException("Nenhum terreno encontrado.");
     }
 
-    /**
-     * Parseia uma string de localização para objeto Location
-     * Formato esperado: "world:x:y:z"
-     */
-    public Location parsearLocalizacao(String locationStr) {
-        if (locationStr == null || locationStr.isEmpty()) {
-            return null;
-        }
-
-        try {
-            String[] parts = locationStr.split(":");
-            if (parts.length != 4) {
-                return null;
-            }
-
-            String worldName = parts[0];
-            double x = Double.parseDouble(parts[1]);
-            double y = Double.parseDouble(parts[2]);
-            double z = Double.parseDouble(parts[3]);
-
-            org.bukkit.World world = org.bukkit.Bukkit.getWorld(worldName);
-            if (world == null) {
-                return null;
-            }
-
-            return new Location(world, x, y, z);
-        } catch (Exception e) {
-            return null;
-        }
+    private Double[] findBoundaries(Terreno t) {
+        Location loc = LocationUtils.parsearLocalizacao(t.getLocation());
+        int size = t.getSize();
+        double halfSize = size / 2.0;
+        double minX = loc.getX() - halfSize;
+        double maxX = loc.getX() + halfSize;
+        double minZ = loc.getZ() - halfSize;
+        double maxZ = loc.getZ() + halfSize;
+        return new Double[]{minX, maxX, minZ, maxZ};
     }
 
     public Optional<Location> getSafeTeleportLocation(Long id, String requesterUUID) {
@@ -275,7 +259,7 @@ public class TerrenoService {
         if (!(terreno.getDonoUUID().equals(requesterUUID) || isAdminDoTerreno(id, requesterUUID))) {
             return Optional.empty();
         }
-        Location center = parsearLocalizacao(terreno.getLocation());
+        Location center = LocationUtils.parsearLocalizacao(terreno.getLocation());
         if (center == null) return Optional.empty();
         Location spot = SafeLocationUtils.findSafeSpot(center, terreno.getSize(), config);
         if (spot != null) return Optional.of(spot);

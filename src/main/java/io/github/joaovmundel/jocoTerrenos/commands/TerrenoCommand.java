@@ -6,6 +6,7 @@ import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
+import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
 import io.github.joaovmundel.jocoTerrenos.utils.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -145,8 +146,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         if (args.length < 2) {
             try {
                 // Info do terreno atual
-                Terreno t = terrenoService.buscarTerrenoAtual(player);
-                player.sendMessage(t.toString());
+                Terreno t = terrenoService.getCurrentTerreno(player);
                 exibirInfo(player, t);
                 return true;
             } catch (TerrenoNotFoundException ex) {
@@ -172,7 +172,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         player.sendMessage("§7Dono: §f" + (donoNome != null ? donoNome : t.getDonoUUID()));
         player.sendMessage("§7Terreno: §f" + t.getName());
         player.sendMessage("§7Tamanho: §f" + t.getSize() + "x" + t.getSize());
-        player.sendMessage("§7Localização: §f" + t.getLocation());
+        player.sendMessage("§7Localização: §f" + LocationUtils.formattedLocation(t.getLocation()));
         player.sendMessage("§7PvP: " + (t.getPvp() ? "§aHabilitado" : "§cDesabilitado"));
         player.sendMessage("§7Mobs: " + (t.getMobs() ? "§aHabilitado" : "§cDesabilitado"));
         player.sendMessage("§7Acesso Público: " + (t.getPublicAccess() ? "§aSim" : "§cNão"));
@@ -196,7 +196,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             }
 
             // Remove as cercas antes de deletar
-            Location loc = terrenoService.parsearLocalizacao(terreno.getLocation());
+            Location loc = LocationUtils.parsearLocalizacao(terreno.getLocation());
             if (loc != null) {
                 String resultado = FenceUtils.removerCercas(loc, terreno.getSize());
                 player.sendMessage(resultado);
