@@ -50,10 +50,11 @@ public class LocationUtils {
                 return null;
             }
 
-            String worldName = parts[0];
-            double x = Double.parseDouble(parts[1]);
-            double y = Double.parseDouble(parts[2]);
-            double z = Double.parseDouble(parts[3]);
+            String worldName = parts[0].trim();
+            // Use parsing que lida com vírgulas como separador decimal
+            double x = parseLocaleDouble(parts[1]);
+            double y = parseLocaleDouble(parts[2]);
+            double z = parseLocaleDouble(parts[3]);
 
             org.bukkit.World world = org.bukkit.Bukkit.getWorld(worldName);
             if (world == null) {
@@ -63,6 +64,43 @@ public class LocationUtils {
             return new Location(world, x, y, z);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * Versão "raw" que não usa Bukkit APIs, segura para threads assíncronas.
+     * Retorna null se o formato for inválido.
+     */
+    public static LocationRaw parsearLocalizacaoRaw(String locationStr) {
+        if (locationStr == null || locationStr.isEmpty()) {
+            return null;
+        }
+        try {
+            String[] parts = locationStr.split(":");
+            if (parts.length != 4) return null;
+            String worldName = parts[0].trim();
+            double x = parseLocaleDouble(parts[1]);
+            double y = parseLocaleDouble(parts[2]);
+            double z = parseLocaleDouble(parts[3]);
+            return new LocationRaw(worldName, x, y, z);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * DTO simples para parsing sem Bukkit.
+     */
+    public static final class LocationRaw {
+        public final String worldName;
+        public final double x;
+        public final double y;
+        public final double z;
+        public LocationRaw(String worldName, double x, double y, double z) {
+            this.worldName = worldName;
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
     }
 }

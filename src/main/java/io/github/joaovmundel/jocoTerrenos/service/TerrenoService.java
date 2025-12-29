@@ -4,15 +4,16 @@ import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
+import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils.LocationRaw;
 import io.github.joaovmundel.jocoTerrenos.utils.SafeLocationUtils;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-
-import java.util.List;
-import java.util.Optional;
 
 public class TerrenoService {
 
@@ -116,23 +117,6 @@ public class TerrenoService {
     }
 
     /**
-     * Busca o terreno atual do jogador
-     */
-    public Terreno buscarTerrenoAtual(Player player) throws TerrenoNotFoundException {
-        Location playerLoc = player.getLocation();
-        List<Terreno> terrenos = repository.findAll();
-        for (Terreno t : terrenos) {
-            Location center = LocationUtils.parsearLocalizacao(t.getLocation());
-            if (center == null) continue;
-            int size = t.getSize();
-            if (estaDentroDaArea(playerLoc, center, size)) {
-                return t;
-            }
-        }
-        throw new TerrenoNotFoundException("Nenhum terreno encontrado.");
-    }
-
-    /**
      * Deleta um terreno (apenas se o jogador for o dono)
      */
     public boolean deletarTerreno(Long id, String playerUUID) {
@@ -225,31 +209,74 @@ public class TerrenoService {
         return repository.update(t);
     }
 
+    // Java
     public Terreno getCurrentTerreno(Player p) throws TerrenoNotFoundException {
-        List<Terreno> terrenos = repository.findAll();
         Location playerLoc = p.getLocation();
+        String playerWorld = playerLoc.getWorld() != null ? playerLoc.getWorld().getName() : null;
+        double playerX = playerLoc.getX();
+        double playerZ = playerLoc.getZ();
+
+        // Se o repositório permitir, substitua por uma consulta espacial:
+        // List<Terreno> terrenos = repository.findByWorldAndApproxArea(playerWorld, playerX, playerZ);
+        List<Terreno> terrenos = repository.findAll();
+
         for (Terreno t : terrenos) {
-            double playerX = playerLoc.getX();
-            double playerZ = playerLoc.getZ();
-            Double[] boundaries = findBoundaries(t);
-            if (playerX >= boundaries[0] && playerX <= boundaries[1]
-                    && playerZ >= boundaries[2] && playerZ <= boundaries[3]) {
+            Location loc = LocationUtils.parsearLocalizacao(t.getLocation());
+            if (loc == null || loc.getWorld() == null) {
+                continue;
+            }
+            if (playerWorld == null || !loc.getWorld().getName().equals(playerWorld)) {
+                continue;
+            }
+
+            int size = t.getSize();
+            double halfSize = size / 2.0;
+
+            double minX = loc.getX() - halfSize;
+            double maxX = loc.getX() + halfSize;
+            double minZ = loc.getZ() - halfSize;
+            double maxZ = loc.getZ() + halfSize;
+
+            if (playerX >= minX && playerX <= maxX && playerZ >= minZ && playerZ <= maxZ) {
                 return t;
             }
         }
+
         throw new TerrenoNotFoundException("Nenhum terreno encontrado.");
     }
 
-    private Double[] findBoundaries(Terreno t) {
-        Location loc = LocationUtils.parsearLocalizacao(t.getLocation());
-        int size = t.getSize();
-        double halfSize = size / 2.0;
-        double minX = loc.getX() - halfSize;
-        double maxX = loc.getX() + halfSize;
-        double minZ = loc.getZ() - halfSize;
-        double maxZ = loc.getZ() + halfSize;
-        return new Double[]{minX, maxX, minZ, maxZ};
+    /**
+     * Versão assíncrona que evita bloquear o thread principal.
+     * Busca terrenos no repositório e calcula os limites fora da main thread.
+     * Nota: não chama APIs Bukkit fora da main thread.
+     */
+    public CompletableFuture<Terreno> getCurrentTerrenoAsync(Player p) {
+        // Snapshot mínimo do estado do player na main thread
+        Location playerLoc = p.getLocation();
+        String playerWorld = playerLoc.getWorld() != null ? playerLoc.getWorld().getName() : null;
+        double playerX = playerLoc.getX();
+        double playerZ = playerLoc.getZ();
+
+        return CompletableFuture.supplyAsync(() -> {
+            List<Terreno> terrenos = repository.findAll();
+            for (Terreno t : terrenos) {
+                LocationRaw raw = LocationUtils.parsearLocalizacaoRaw(t.getLocation());
+                if (raw == null || raw.worldName == null) continue;
+                if (playerWorld == null || !raw.worldName.equals(playerWorld)) continue;
+                int size = t.getSize();
+                double halfSize = size / 2.0;
+                double minX = raw.x - halfSize;
+                double maxX = raw.x + halfSize;
+                double minZ = raw.z - halfSize;
+                double maxZ = raw.z + halfSize;
+                if (playerX >= minX && playerX <= maxX && playerZ >= minZ && playerZ <= maxZ) {
+                    return t;
+                }
+            }
+            throw new RuntimeException(new TerrenoNotFoundException("Nenhum terreno encontrado."));
+        });
     }
+
 
     public Optional<Location> getSafeTeleportLocation(Long id, String requesterUUID) {
         Optional<Terreno> terrenoOpt = repository.findById(id);
