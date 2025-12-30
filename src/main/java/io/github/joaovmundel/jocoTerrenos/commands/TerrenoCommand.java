@@ -21,16 +21,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings({"SameReturnValue", "NullableProblems"})
 public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
+    private final JocoTerrenos plugin;
     private final JocoLogging logger = new JocoLogging(this.getClass().getName());
     private final TerrenoService terrenoService;
     private static final List<String> SUB_COMMANDS = Arrays.asList("comprar", "preco", "listar", "info", "deletar", "pvp", "mobs", "publico", "tp");
 
     public TerrenoCommand(JocoTerrenos plugin) {
         this.terrenoService = plugin.getTerrenoService();
+        this.plugin = plugin;
     }
 
     @Override
@@ -145,25 +148,33 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleInfo(Player player, String[] args) {
-        try {
-            if (args.length < 2) {
-                // Info do terreno atual
-                Terreno t = terrenoService.getCurrentTerreno(player);
-                exibirInfo(player, t);
-                return true;
+        if (args.length < 2) {
+            CompletableFuture<Terreno> asyncSearch = terrenoService.getCurrentTerrenoAsync(player);
 
-            }
+            asyncSearch.thenAccept(terreno -> {
+                Bukkit.getScheduler().runTask(plugin, () -> exibirInfo(player, terreno));
+            }).exceptionally(ex -> {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.sendMessage("§eVocê não está em nenhum terreno no momento.");
+                });
+                logger.warning(ex.getMessage());
+                return null;
+            });
+
+            return true;
+        }
+
+        try {
             String nome = joinArgs(args, 1);
             String donoUUID = player.getUniqueId().toString();
             Terreno terreno = terrenoService.buscarTerrenoPorNome(donoUUID, nome);
             exibirInfo(player, terreno);
         } catch (TerrenoNotFoundException ex) {
-            player.sendMessage("§eVocê não está em nenhum terreno no momento.");
-            logger.warning(ex.getMessage());
-            return true;
+            player.sendMessage("§eTerreno não encontrado.");
         }
         return true;
     }
+
 
     private void exibirInfo(Player player, Terreno t) {
         String donoNome = Bukkit.getOfflinePlayer(java.util.UUID.fromString(t.getDonoUUID())).getName();
