@@ -209,7 +209,6 @@ build.xml
 
 ### Github ###
 .github
-README.md
 LICENSE
 
 # End of https://www.gitignore.io/api/java,maven,eclipse,intellij+iml,git
