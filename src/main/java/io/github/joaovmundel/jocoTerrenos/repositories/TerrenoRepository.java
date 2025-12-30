@@ -27,9 +27,9 @@ public class TerrenoRepository {
      */
     public Optional<Terreno> create(Terreno terreno) {
         String sql = """
-            INSERT INTO terrenos (dono_uuid, name, db_name_key, location, size, pvp, mobs, public_access)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """;
+                    INSERT INTO terrenos (dono_uuid, name, db_name_key, location, size, pvp, mobs, public_access)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection conn = databaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -117,6 +117,30 @@ public class TerrenoRepository {
         return terrenos;
     }
 
+    public Terreno findByName(String ownerUUID, String name) {
+        String sql = "SELECT * FROM terrenos WHERE name = ?";
+
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, ownerUUID + "+" + name);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Terreno terreno = mapResultSetToTerreno(rs);
+                    terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
+                    return terreno;
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao buscar terreno por nome: " + name, e);
+        }
+
+        return null;
+    }
+
+
     /**
      * Busca todos os terrenos
      */
@@ -146,10 +170,10 @@ public class TerrenoRepository {
      */
     public boolean update(Terreno terreno) {
         String sql = """
-            UPDATE terrenos
-            SET dono_uuid = ?, name = ?, db_name_key = ?, location = ?, size = ?, pvp = ?, mobs = ?, public_access = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """;
+                    UPDATE terrenos
+                    SET dono_uuid = ?, name = ?, db_name_key = ?, location = ?, size = ?, pvp = ?, mobs = ?, public_access = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """;
 
         try (Connection conn = databaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -203,14 +227,36 @@ public class TerrenoRepository {
         return false;
     }
 
+    public boolean deleteByName(String ownerUUID, String name) {
+        String sql = "DELETE FROM terrenos WHERE id = ?";
+
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, ownerUUID + "+" + name);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                logger.info("Terreno deletado: " + name);
+                return true;
+            }
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao deletar terreno: " + name, e);
+        }
+
+        return false;
+    }
+
     /**
      * Adiciona um membro ao terreno
      */
     public boolean addMember(Long terrenoId, String memberUUID, TerrenoRole role) {
         String sql = """
-            INSERT INTO terreno_members (terreno_id, member_uuid, member_role)
-            VALUES (?, ?, ?)
-        """;
+                    INSERT INTO terreno_members (terreno_id, member_uuid, member_role)
+                    VALUES (?, ?, ?)
+                """;
 
         try (Connection conn = databaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -320,10 +366,10 @@ public class TerrenoRepository {
      */
     public List<Terreno> findTerrenosByMemberUUID(String memberUUID) {
         String sql = """
-            SELECT t.* FROM terrenos t
-            INNER JOIN terreno_members tm ON t.id = tm.terreno_id
-            WHERE tm.member_uuid = ?
-        """;
+                    SELECT t.* FROM terrenos t
+                    INNER JOIN terreno_members tm ON t.id = tm.terreno_id
+                    WHERE tm.member_uuid = ?
+                """;
         List<Terreno> terrenos = new ArrayList<>();
 
         try (Connection conn = databaseManager.getConnection();

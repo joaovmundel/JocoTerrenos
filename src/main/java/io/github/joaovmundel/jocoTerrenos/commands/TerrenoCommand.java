@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-@SuppressWarnings("SameReturnValue")
+@SuppressWarnings({"SameReturnValue", "NullableProblems"})
 public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private final JocoLogging logger = new JocoLogging(this.getClass().getName());
@@ -65,8 +65,10 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleComprar(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("§cUso: /terreno comprar <tamanho> <nome>");
+            player.sendMessage("");
+            player.sendMessage("§cUso: /terreno comprar [tamanho] [nome]");
             player.sendMessage("§7Exemplo: /terreno comprar 10 casa");
+            player.sendMessage("");
             return true;
         }
 
@@ -79,7 +81,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            if (terrenoService.tamanhoValido(tamanho)) {
+            if (!terrenoService.tamanhoValido(tamanho)) {
                 player.sendMessage("§cTamanho mínimo: " + terrenoService.getTamanhoMinimo());
                 player.sendMessage("§cTamanho máximo: " + terrenoService.getTamanhoMaximo());
                 return true;
@@ -143,26 +145,23 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleInfo(Player player, String[] args) {
-        if (args.length < 2) {
-            try {
+        try {
+            if (args.length < 2) {
                 // Info do terreno atual
                 Terreno t = terrenoService.getCurrentTerreno(player);
                 exibirInfo(player, t);
                 return true;
-            } catch (TerrenoNotFoundException ex) {
-                player.sendMessage("§eVocê não está em nenhum terreno no momento.");
-                logger.warning(ex.getMessage());
-                return true;
+
             }
-        }
-        String nome = joinArgs(args, 1);
-        String donoUUID = player.getUniqueId().toString();
-        Optional<Terreno> terreno = terrenoService.buscarTerrenoPorNome(donoUUID, nome);
-        if (terreno.isEmpty()) {
-            player.sendMessage("§cTerreno não encontrado com esse nome.");
+            String nome = joinArgs(args, 1);
+            String donoUUID = player.getUniqueId().toString();
+            Terreno terreno = terrenoService.buscarTerrenoPorNome(donoUUID, nome);
+            exibirInfo(player, terreno);
+        } catch (TerrenoNotFoundException ex) {
+            player.sendMessage("§eVocê não está em nenhum terreno no momento.");
+            logger.warning(ex.getMessage());
             return true;
         }
-        exibirInfo(player, terreno.get());
         return true;
     }
 
@@ -181,29 +180,21 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleDeletar(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno deletar <id>");
+            player.sendMessage("§cUso: /terreno deletar [nome]");
             return true;
         }
 
         try {
-            Long id = Long.parseLong(args[1]);
+            String name = args[1];
             String playerUUID = player.getUniqueId().toString();
-            Terreno terreno = terrenoService.buscarTerreno(id);
-
-            if (!terrenoService.isDono(id, playerUUID)) {
-                player.sendMessage("§cVocê não é o dono deste terreno!");
-                return true;
-            }
-
-            // Remove as cercas antes de deletar
-            Location loc = LocationUtils.parsearLocalizacao(terreno.getLocation());
-            if (loc != null) {
-                String resultado = FenceUtils.removerCercas(loc, terreno.getSize());
-                player.sendMessage(resultado);
-            }
+            Terreno terreno = terrenoService.buscarTerrenoPorNome(playerUUID, name);
 
             // Deleta o terreno
-            if (terrenoService.deletarTerreno(id, playerUUID)) {
+            if (terrenoService.deletarTerreno(name, playerUUID)) {
+                Location loc = LocationUtils.parsearLocalizacao(terreno.getLocation());
+                if (loc != null) {
+                    FenceUtils.removerCercas(loc, terreno.getSize());
+                }
                 player.sendMessage("§aTereno deletado com sucesso!");
             } else {
                 player.sendMessage("§cErro ao deletar terreno!");
@@ -221,7 +212,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleTogglePvp(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno pvp <id>");
+            player.sendMessage("§cUso: /terreno pvp [nome]");
             return true;
         }
 
@@ -230,7 +221,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleToggleMobs(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno mobs <id>");
+            player.sendMessage("§cUso: /terreno mobs [nome]");
             return true;
         }
 
@@ -239,23 +230,18 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleTogglePublico(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno publico <id>");
+            player.sendMessage("§cUso: /terreno publico [nome]");
             return true;
         }
 
         return toggleSetting(player, args[1], "publico");
     }
 
-    private boolean toggleSetting(Player player, String idStr, String setting) {
+    private boolean toggleSetting(Player player, String nome, String setting) {
         try {
-            Long id = Long.parseLong(idStr);
             String playerUUID = player.getUniqueId().toString();
 
-            // Verifica se o terreno existe
-            Terreno terreno = terrenoService.buscarTerreno(id);
-
-            // Verifica se é o dono
-            if (!terrenoService.isDono(id, playerUUID)) {
+            if (!terrenoService.isDono(nome, playerUUID)) {
                 player.sendMessage("§cVocê não é o dono deste terreno!");
                 return true;
             }
@@ -265,43 +251,44 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
             switch (setting) {
                 case "pvp":
-                    success = terrenoService.togglePvp(id, playerUUID);
-                    Terreno t1 = terrenoService.buscarTerreno(id);
+                    success = terrenoService.togglePvp(nome, playerUUID);
+                    Terreno t1 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
                     if (t1 == null) {
-                        player.sendMessage("§cErro ao atualizar terreno!");
+                        player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
                         return true;
                     }
-                    mensagem = "§aPvP " + (t1.getPvp() ? "habilitado" : "desabilitado") + "!";
+                    mensagem = "§6[Terreno] §7PvP " + (t1.getPvp() ? "§ahabilitado" : "§cdesabilitado") + "!";
                     break;
                 case "mobs":
-                    success = terrenoService.toggleMobs(id, playerUUID);
-                    Terreno t2 = terrenoService.buscarTerreno(id);
+                    success = terrenoService.toggleMobs(nome, playerUUID);
+                    Terreno t2 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
                     if (t2 == null) {
-                        player.sendMessage("§cErro ao atualizar terreno!");
+                        player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
                         return true;
                     }
-                    mensagem = "§aMobs " + (t2.getMobs() ? "habilitados" : "desabilitados") + "!";
+                    mensagem = "§6[Terreno] §7Mobs " + (t2.getMobs() ? "§ahabilitados" : "§cdesabilitados") + "!";
                     break;
                 case "publico":
-                    success = terrenoService.togglePublico(id, playerUUID);
-                    Terreno t3 = terrenoService.buscarTerreno(id);
+                    success = terrenoService.togglePublico(nome, playerUUID);
+                    Terreno t3 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
                     if (t3 == null) {
-                        player.sendMessage("§cErro ao atualizar terreno!");
+                        player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
                         return true;
                     }
-                    mensagem = "§aAcesso público " + (t3.getPublicAccess() ? "habilitado" : "desabilitado") + "!";
+                    mensagem = "§6[Terreno] §7Acesso público " + (t3.getPublicAccess() ? "§ahabilitado" : "§cdesabilitado") + "!";
                     break;
             }
 
             if (success) {
                 player.sendMessage(mensagem);
-                player.sendMessage("§aTereno atualizado!");
+                player.sendMessage("§6[Terreno] §7Configuração atualizada com sucesso para §f" + nome + "§7!");
             } else {
-                player.sendMessage("§cErro ao atualizar terreno!");
+                player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
+                logger.warning("Erro ao atualizar configuração do terreno para " + setting);
+                logger.warning("Jogador: " + player.getName() + " - Terreno: " + nome);
+                logger.warning("Sucesso: " + success);
             }
 
-        } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um ID válido!");
         } catch (TerrenoNotFoundException e) {
             player.sendMessage("§cErro ao atualizar terreno!");
             logger.warning(e.getMessage());
@@ -312,31 +299,26 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleTp(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno tp <id>");
+            player.sendMessage("§cUso: /terreno tp [nome]");
             return true;
         }
         try {
-            Long id = Long.parseLong(args[1]);
+            String name = args[1];
             String playerUUID = player.getUniqueId().toString();
 
-            Terreno terreno = terrenoService.buscarTerreno(id);
-
-            // Permissão: apenas dono ou admin
-            if (!(terrenoService.isDono(id, playerUUID) || terrenoService.isAdminDoTerreno(id, playerUUID))) {
+            if (!(terrenoService.isDono(name, playerUUID))) {
                 player.sendMessage("§cVocê não tem permissão para teleportar para este terreno!");
                 return true;
             }
 
-            Optional<Location> safeLocOpt = terrenoService.getSafeTeleportLocation(id, playerUUID);
+            Optional<Location> safeLocOpt = terrenoService.getSafeTeleportLocation(name, playerUUID);
             if (safeLocOpt.isPresent()) {
                 Location safe = safeLocOpt.get();
                 player.teleport(safe);
-                player.sendMessage("§aTeleportado para um local seguro no terreno #" + id + "!");
+                player.sendMessage("§aTeleportado para um local seguro no terreno §f" + name + "§a!");
             } else {
                 player.sendMessage("§cNão foi possível encontrar um local seguro para teleportar neste terreno.");
             }
-        } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um ID válido!");
         } catch (TerrenoNotFoundException e) {
             player.sendMessage("§cTerreno não encontrado!");
             logger.warning("[JocoTerrenos] TerrenoCommand: " + e.getMessage());
@@ -346,7 +328,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handlePreco(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno preco <tamanho>");
+            player.sendMessage("§cUso: /terreno preco [tamanho]");
             player.sendMessage("§7Exemplo: /terreno preco 10");
             return true;
         }
@@ -370,15 +352,15 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(Player player) {
         player.sendMessage("§a§l=== Comandos de Terreno ===");
-        player.sendMessage("§7/terreno comprar <tamanho> <nome> §f- Compra um terreno");
-        player.sendMessage("§7/terreno preco <tamanho> §f- Mostra o preço de um terreno NxN");
+        player.sendMessage("§7/terreno comprar [tamanho] [nome] §f- Compra um terreno");
+        player.sendMessage("§7/terreno preco [tamanho] §f- Mostra o preço de um terreno NxN");
         player.sendMessage("§7/terreno listar §f- Lista seus terrenos");
         player.sendMessage("§7/terreno info [nome] §f- Informações do terreno atual ou pelo nome");
-        player.sendMessage("§7/terreno deletar <id> §f- Deleta um terreno");
-        player.sendMessage("§7/terreno pvp <id> §f- Alterna PvP");
-        player.sendMessage("§7/terreno mobs <id> §f- Alterna Mobs");
-        player.sendMessage("§7/terreno publico <id> §f- Alterna acesso público");
-        player.sendMessage("§7/terreno tp <id> §f- Teleporta para um local seguro dentro do terreno");
+        player.sendMessage("§7/terreno deletar [nome] §f- Deleta um terreno");
+        player.sendMessage("§7/terreno pvp [nome] §f- Alterna PvP");
+        player.sendMessage("§7/terreno mobs [nome] §f- Alterna Mobs");
+        player.sendMessage("§7/terreno publico [nome] §f- Alterna acesso público");
+        player.sendMessage("§7/terreno tp [nome] §f- Teleporta para um local seguro dentro do terreno");
     }
 
     @Override
@@ -417,8 +399,8 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 case "publico":
                 case "tp":
                     for (Terreno t : terrenoService.listarTerrenosDoJogador(playerUUID)) {
-                        String idStr = String.valueOf(t.getId());
-                        if (idStr.startsWith(prefix)) suggestions.add(idStr);
+                        String terrenoName = t.getName();
+                        if (terrenoName.startsWith(prefix)) suggestions.add(terrenoName);
                     }
                     break;
             }

@@ -1,5 +1,6 @@
 package io.github.joaovmundel.jocoTerrenos.utils;
 
+import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,8 +12,10 @@ import org.bukkit.plugin.Plugin;
 import java.util.EnumSet;
 
 public class FenceUtils {
+    private static final JocoLogging logger = new JocoLogging("io.github.joaovmundel.jocoTerrenos.utils.FenceUtils.java");
 
-    private FenceUtils() {}
+    private FenceUtils() {
+    }
 
     /**
      * Coloca cercas em torno do jogador, definindo uma área quadrada com o tamanho especificado.
@@ -23,7 +26,7 @@ public class FenceUtils {
      */
     public static void colocarCercas(Player player, double areaM2) {
         if (areaM2 <= 0) {
-            player.sendMessage("§cO tamanho da área deve ser maior que zero!");
+            logger.warning(player.getName() + " Tentativa de colocar cercas com área inválida: " + areaM2);
             return;
         }
 
@@ -34,7 +37,7 @@ public class FenceUtils {
         World world = centerLoc.getWorld();
 
         if (world == null) {
-            player.sendMessage("§cMundo inválido!");
+            logger.warning("Mundo nulo ao tentar colocar cercas para o jogador: " + player.getName());
             return;
         }
 
@@ -44,17 +47,17 @@ public class FenceUtils {
         // Usa a função auxiliar para colocar as cercas
         int fencesPlaced = colocarCercasPerimetro(world, centerX, centerZ, lado);
 
-        player.sendMessage("§aCercas colocadas com sucesso!");
-        player.sendMessage("§7Área: " + lado + "x" + lado + " blocos (" + (lado * lado) + "m²)");
-        player.sendMessage("§7Total de cercas colocadas: " + fencesPlaced);
+        logger.info("Cercas colocadas com sucesso!");
+        logger.info("§7Área: " + lado + "x" + lado + " blocos (" + (lado * lado) + "m²)");
+        logger.info("§7Total de cercas colocadas: " + fencesPlaced);
     }
 
     /**
      * Redimensiona uma área de cercas, removendo o perímetro antigo e criando um novo.
      *
-     * @param centerLoc A localização central da área
+     * @param centerLoc     A localização central da área
      * @param tamanhoAntigo O tamanho antigo do lado da área (ex: 10 para 10x10)
-     * @param tamanhoNovo O novo tamanho do lado da área (ex: 20 para 20x20)
+     * @param tamanhoNovo   O novo tamanho do lado da área (ex: 20 para 20x20)
      * @return Mensagem com o resultado da operação
      */
     public static String resizeCercas(Location centerLoc, int tamanhoAntigo, int tamanhoNovo) {
@@ -83,17 +86,17 @@ public class FenceUtils {
         String acao = tamanhoNovo > tamanhoAntigo ? "expandida" : "reduzida";
 
         return "§aÁrea " + acao + " com sucesso!\n" +
-               "§7Tamanho antigo: " + tamanhoAntigo + "x" + tamanhoAntigo + " (" + (tamanhoAntigo * tamanhoAntigo) + "m²)\n" +
-               "§7Tamanho novo: " + tamanhoNovo + "x" + tamanhoNovo + " (" + (tamanhoNovo * tamanhoNovo) + "m²)\n" +
-               "§7Cercas removidas: " + cercasRemovidas + "\n" +
-               "§7Cercas colocadas: " + cercasColocadas;
+                "§7Tamanho antigo: " + tamanhoAntigo + "x" + tamanhoAntigo + " (" + (tamanhoAntigo * tamanhoAntigo) + "m²)\n" +
+                "§7Tamanho novo: " + tamanhoNovo + "x" + tamanhoNovo + " (" + (tamanhoNovo * tamanhoNovo) + "m²)\n" +
+                "§7Cercas removidas: " + cercasRemovidas + "\n" +
+                "§7Cercas colocadas: " + cercasColocadas;
     }
 
     /**
      * Remove cercas de uma área quadrada.
      *
      * @param centerLoc A localização central da área
-     * @param tamanho O tamanho do lado da área (ex: 10 para 10x10)
+     * @param tamanho   O tamanho do lado da área (ex: 10 para 10x10)
      * @return Mensagem com o resultado da operação
      */
     public static String removerCercas(Location centerLoc, int tamanho) {
@@ -113,14 +116,14 @@ public class FenceUtils {
         int cercasRemovidas = removerCercasPerimetro(world, centerX, centerZ, tamanho);
 
         return "§aCercas removidas com sucesso!\n" +
-               "§7Área: " + tamanho + "x" + tamanho + " blocos (" + (tamanho * tamanho) + "m²)\n" +
-               "§7Total de cercas removidas: " + cercasRemovidas;
+                "§7Área: " + tamanho + "x" + tamanho + " blocos (" + (tamanho * tamanho) + "m²)\n" +
+                "§7Total de cercas removidas: " + cercasRemovidas;
     }
 
     /**
      * Coloca cercas no perímetro de uma área.
      *
-     * @param world O mundo
+     * @param world   O mundo
      * @param centerX Coordenada X central
      * @param centerZ Coordenada Z central
      * @param tamanho Tamanho do lado da área
@@ -155,7 +158,7 @@ public class FenceUtils {
     /**
      * Remove cercas do perímetro de uma área.
      *
-     * @param world O mundo
+     * @param world   O mundo
      * @param centerX Coordenada X central
      * @param centerZ Coordenada Z central
      * @param tamanho Tamanho do lado da área
@@ -191,8 +194,8 @@ public class FenceUtils {
      * Remove uma cerca em uma posição X, Z específica se for uma cerca.
      *
      * @param world O mundo onde a cerca será removida
-     * @param x Coordenada X
-     * @param z Coordenada Z
+     * @param x     Coordenada X
+     * @param z     Coordenada Z
      * @return 1 se a cerca foi removida, 0 caso contrário
      */
     private static int removerCercaNoBloco(World world, int x, int z) {
@@ -231,8 +234,8 @@ public class FenceUtils {
      * Busca a superfície adequada para colocar a cerca.
      *
      * @param world O mundo onde a cerca será colocada
-     * @param x Coordenada X
-     * @param z Coordenada Z
+     * @param x     Coordenada X
+     * @param z     Coordenada Z
      * @return 1 se a cerca foi colocada, 0 caso contrário
      */
     private static int colocarCercaNoBloco(World world, int x, int z) {
@@ -260,8 +263,8 @@ public class FenceUtils {
      * Procura de cima para baixo, evitando cavernas e priorizando o solo.
      *
      * @param world O mundo
-     * @param x Coordenada X
-     * @param z Coordenada Z
+     * @param x     Coordenada X
+     * @param z     Coordenada Z
      * @return A coordenada Y da superfície, ou -1 se não encontrar
      */
     private static int encontrarSuperficie(World world, int x, int z) {
@@ -300,9 +303,9 @@ public class FenceUtils {
      * Isso ajuda a evitar colocar cercas dentro de cavernas.
      *
      * @param world O mundo
-     * @param x Coordenada X
-     * @param y Coordenada Y inicial
-     * @param z Coordenada Z
+     * @param x     Coordenada X
+     * @param y     Coordenada Y inicial
+     * @param z     Coordenada Z
      * @return true se há céu acima, false caso contrário
      */
     private static boolean temCeuAcima(World world, int x, int y, int z) {
@@ -336,9 +339,9 @@ public class FenceUtils {
 
         // Verifica se não é ar, água, lava ou outros blocos não-sólidos
         return material.isSolid() &&
-               material != Material.AIR &&
-               material != Material.CAVE_AIR &&
-               material != Material.VOID_AIR;
+                material != Material.AIR &&
+                material != Material.CAVE_AIR &&
+                material != Material.VOID_AIR;
     }
 
     private static Material getConfiguredFenceMaterial() {
