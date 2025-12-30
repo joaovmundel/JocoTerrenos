@@ -21,10 +21,12 @@ public class TerrenoService {
 
     private final TerrenoRepository repository;
     private final FileConfiguration config;
+    private final MessageService messages;
 
-    public TerrenoService(TerrenoRepository repository, FileConfiguration config) {
+    public TerrenoService(TerrenoRepository repository, FileConfiguration config, MessageService messages) {
         this.repository = repository;
         this.config = config;
+        this.messages = messages;
     }
 
     /**
@@ -105,10 +107,16 @@ public class TerrenoService {
     /**
      * Busca um terreno por nome
      */
+    public Terreno buscarTerreno(Long id) throws TerrenoNotFoundException {
+        Optional<Terreno> optionalTerreno = repository.findById(id);
+        return optionalTerreno.orElseThrow(() -> new TerrenoNotFoundException(messages.get("errors.terreno.id-nao-encontrado")));
+    }
+
     public Terreno buscarTerrenoPorNome(String donoUUID, String nome) throws TerrenoNotFoundException {
-        if (nome == null) return null;
+        if (nome == null || nome.trim().isEmpty())
+            throw new TerrenoNotFoundException(messages.get("errors.terreno.nome-invalido"));
         String key = donoUUID + "+" + nome.trim().toLowerCase();
-        return repository.findByNameKey(key).orElseThrow(() -> new TerrenoNotFoundException("Ocorreu um erro ao buscar o terreno com nome " + nome + "."));
+        return repository.findByNameKey(key).orElseThrow(() -> new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado")));
     }
 
     public boolean deletarTerreno(String name, String playerUUID) throws TerrenoNotFoundException {
@@ -143,7 +151,8 @@ public class TerrenoService {
     }
 
     public boolean isDono(Terreno terreno, String playerUUID) {
-        return terreno.getDonoUUID().equals(playerUUID);
+        String dono = terreno.getDonoUUID();
+        return dono != null && dono.equals(playerUUID);
     }
 
     /**
@@ -213,7 +222,7 @@ public class TerrenoService {
                     return t;
                 }
             }
-            throw new RuntimeException(new TerrenoNotFoundException("Nenhum terreno encontrado."));
+            throw new RuntimeException(new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado")));
         });
     }
 

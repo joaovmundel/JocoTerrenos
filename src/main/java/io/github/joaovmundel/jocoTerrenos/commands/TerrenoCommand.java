@@ -257,48 +257,39 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            boolean success = false;
-            String mensagem = "";
+            boolean success = switch (setting) {
+                case "pvp" -> terrenoService.togglePvp(nome, playerUUID);
+                case "mobs" -> terrenoService.toggleMobs(nome, playerUUID);
+                case "publico" -> terrenoService.togglePublico(nome, playerUUID);
+                default -> false;
+            };
 
-            switch (setting) {
-                case "pvp":
-                    success = terrenoService.togglePvp(nome, playerUUID);
-                    Terreno t1 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
-                    if (t1 == null) {
-                        plugin.getMessageService().send(player, "terreno.toggle.erro");
-                        return true;
-                    }
-                    mensagem = plugin.getMessageService().format("terreno.toggle.pvp", MessageService.placeholders("status", (t1.getPvp() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
-                    break;
-                case "mobs":
-                    success = terrenoService.toggleMobs(nome, playerUUID);
-                    Terreno t2 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
-                    if (t2 == null) {
-                        plugin.getMessageService().send(player, "terreno.toggle.erro");
-                        return true;
-                    }
-                    mensagem = plugin.getMessageService().format("terreno.toggle.mobs", MessageService.placeholders("status", (t2.getMobs() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
-                    break;
-                case "publico":
-                    success = terrenoService.togglePublico(nome, playerUUID);
-                    Terreno t3 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
-                    if (t3 == null) {
-                        plugin.getMessageService().send(player, "terreno.toggle.erro");
-                        return true;
-                    }
-                    mensagem = plugin.getMessageService().format("terreno.toggle.publico", MessageService.placeholders("status", (t3.getPublicAccess() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
-                    break;
-            }
-
-            if (success) {
-                player.sendMessage(mensagem);
-                plugin.getMessageService().send(player, "terreno.toggle.sucesso", MessageService.placeholders("name", nome));
-            } else {
+            if (!success) {
                 plugin.getMessageService().send(player, "terreno.toggle.erro");
                 logger.warning("Erro ao atualizar configuração do terreno para " + setting);
                 logger.warning("Jogador: " + player.getName() + " - Terreno: " + nome);
+                return true;
             }
 
+            Terreno atualizado = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
+            String mensagem = switch (setting) {
+                case "pvp" -> plugin.getMessageService().format("terreno.toggle.pvp",
+                        MessageService.placeholders("status",
+                                atualizado.getPvp() ? plugin.getMessageService().get("status.habilitado")
+                                        : plugin.getMessageService().get("status.desabilitado")));
+                case "mobs" -> plugin.getMessageService().format("terreno.toggle.mobs",
+                        MessageService.placeholders("status",
+                                atualizado.getMobs() ? plugin.getMessageService().get("status.habilitado")
+                                        : plugin.getMessageService().get("status.desabilitado")));
+                case "publico" -> plugin.getMessageService().format("terreno.toggle.publico",
+                        MessageService.placeholders("status",
+                                atualizado.getPublicAccess() ? plugin.getMessageService().get("status.habilitado")
+                                        : plugin.getMessageService().get("status.desabilitado")));
+                default -> "";
+            };
+
+            player.sendMessage(mensagem);
+            plugin.getMessageService().send(player, "terreno.toggle.sucesso", MessageService.placeholders("name", nome));
         } catch (TerrenoNotFoundException e) {
             plugin.getMessageService().send(player, "terreno.toggle.erro");
             logger.warning(e.getMessage());

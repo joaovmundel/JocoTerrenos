@@ -105,3 +105,9 @@ terreno.preco.usage2: '&7Exemplo: /terreno preco 10'
 terreno.preco.min: '&cTamanho mínimo: {min}'
 terreno.preco.max: '&cTamanho máximo: {max}'
 terreno.preco.valor: '&aPreço do terreno {size}x{size}: &e{price}'
+
+errors:
+  terreno:
+    id-nao-encontrado: '&cTerreno não encontrado pelo ID informado.'
+    nome-invalido: '&cNome do terreno inválido.'
+    nao-encontrado: '&cTerreno não encontrado.'
