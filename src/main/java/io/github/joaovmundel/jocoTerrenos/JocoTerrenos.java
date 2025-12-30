@@ -12,6 +12,7 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 
 @Getter
 public final class JocoTerrenos extends JavaPlugin {
@@ -20,11 +21,17 @@ public final class JocoTerrenos extends JavaPlugin {
     private TerrenoRepository terrenoRepository;
     private TerrenoService terrenoService;
     private Economy economy;
+    private MessageService messageService;
 
     @Override
     public void onEnable() {
         // Salva a configuração padrão se não existir
         saveDefaultConfig();
+
+        // Inicializa MessageService e arquivos de idioma
+        messageService = new MessageService(this);
+        messageService.initLocalesFolderAndDefaults();
+        messageService.reload();
 
         // Inicializa o banco de dados
         databaseManager = new DatabaseManager(this);
@@ -37,9 +44,9 @@ public final class JocoTerrenos extends JavaPlugin {
         terrenoService = new TerrenoService(terrenoRepository, getConfig());
 
         // Registra os comandos
-        getCommand("cercar").setExecutor(new CercarCommand());
-        getCommand("resizecerca").setExecutor(new ResizeCercaCommand());
-        getCommand("removercerca").setExecutor(new RemoverCercaCommand());
+        getCommand("cercar").setExecutor(new CercarCommand(messageService));
+        getCommand("resizecerca").setExecutor(new ResizeCercaCommand(messageService));
+        getCommand("removercerca").setExecutor(new RemoverCercaCommand(messageService));
         TerrenoCommand terrenoCmd = new TerrenoCommand(this);
         getCommand("terreno").setExecutor(terrenoCmd);
         getCommand("terreno").setTabCompleter(terrenoCmd);

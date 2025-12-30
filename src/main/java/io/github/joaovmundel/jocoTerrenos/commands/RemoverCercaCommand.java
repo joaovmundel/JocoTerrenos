@@ -1,5 +1,6 @@
 package io.github.joaovmundel.jocoTerrenos.commands;
 
+import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -10,17 +11,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoverCercaCommand implements CommandExecutor {
 
+    private final MessageService messages;
+
+    public RemoverCercaCommand(MessageService messages) {
+        this.messages = messages;
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cEste comando só pode ser executado por um jogador!");
+            messages.send(sender, "only-player");
             return true;
         }
 
         if (args.length < 1) {
-            player.sendMessage("§cUso: /removercerca <tamanho>");
-            player.sendMessage("§7Exemplo: /removercerca 10");
-            player.sendMessage("§7Isso removerá as cercas de uma área 10x10 ao seu redor");
+            messages.send(player, "removercerca.usage");
+            messages.send(player, "removercerca.example1");
+            messages.send(player, "removercerca.example2");
             return true;
         }
 
@@ -30,7 +37,7 @@ public class RemoverCercaCommand implements CommandExecutor {
             String resultado = FenceUtils.removerCercas(centerLoc, tamanho);
             player.sendMessage(resultado);
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um número válido!");
+            messages.send(player, "invalid-number");
             return true;
         }
 

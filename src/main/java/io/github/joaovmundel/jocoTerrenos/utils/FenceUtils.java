@@ -9,8 +9,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import java.util.EnumSet;
-
 public class FenceUtils {
     private static final JocoLogging logger = new JocoLogging("io.github.joaovmundel.jocoTerrenos.utils.FenceUtils.java");
 
@@ -62,15 +60,15 @@ public class FenceUtils {
      */
     public static String resizeCercas(Location centerLoc, int tamanhoAntigo, int tamanhoNovo) {
         if (centerLoc == null || centerLoc.getWorld() == null) {
-            return "§cLocalização inválida!";
+            return getMessage("invalid-location");
         }
 
         if (tamanhoAntigo <= 0 || tamanhoNovo <= 0) {
-            return "§cOs tamanhos devem ser maiores que zero!";
+            return getMessage("invalid-size");
         }
 
         if (tamanhoAntigo == tamanhoNovo) {
-            return "§cOs tamanhos são iguais! Nenhuma alteração necessária.";
+            return getMessage("resizecerca.iguais");
         }
 
         World world = centerLoc.getWorld();
@@ -83,13 +81,18 @@ public class FenceUtils {
         // Coloca cercas no novo perímetro
         int cercasColocadas = colocarCercasPerimetro(world, centerX, centerZ, tamanhoNovo);
 
-        String acao = tamanhoNovo > tamanhoAntigo ? "expandida" : "reduzida";
+        String acaoKey = tamanhoNovo > tamanhoAntigo ? "action.expandida" : "action.reduzida";
+        String acao = getMessage(acaoKey);
 
-        return "§aÁrea " + acao + " com sucesso!\n" +
-                "§7Tamanho antigo: " + tamanhoAntigo + "x" + tamanhoAntigo + " (" + (tamanhoAntigo * tamanhoAntigo) + "m²)\n" +
-                "§7Tamanho novo: " + tamanhoNovo + "x" + tamanhoNovo + " (" + (tamanhoNovo * tamanhoNovo) + "m²)\n" +
-                "§7Cercas removidas: " + cercasRemovidas + "\n" +
-                "§7Cercas colocadas: " + cercasColocadas;
+        return format("fences.resize.success",
+                "acao", acao,
+                "old", tamanhoAntigo,
+                "oldArea", tamanhoAntigo * tamanhoAntigo,
+                "new", tamanhoNovo,
+                "newArea", tamanhoNovo * tamanhoNovo,
+                "removed", cercasRemovidas,
+                "placed", cercasColocadas
+        );
     }
 
     /**
@@ -101,11 +104,11 @@ public class FenceUtils {
      */
     public static String removerCercas(Location centerLoc, int tamanho) {
         if (centerLoc == null || centerLoc.getWorld() == null) {
-            return "§cLocalização inválida!";
+            return getMessage("invalid-location");
         }
 
         if (tamanho <= 0) {
-            return "§cO tamanho deve ser maior que zero!";
+            return getMessage("invalid-size");
         }
 
         World world = centerLoc.getWorld();
@@ -115,9 +118,11 @@ public class FenceUtils {
         // Remove cercas do perímetro
         int cercasRemovidas = removerCercasPerimetro(world, centerX, centerZ, tamanho);
 
-        return "§aCercas removidas com sucesso!\n" +
-                "§7Área: " + tamanho + "x" + tamanho + " blocos (" + (tamanho * tamanho) + "m²)\n" +
-                "§7Total de cercas removidas: " + cercasRemovidas;
+        return format("fences.removed.success",
+                "size", tamanho,
+                "area", tamanho * tamanho,
+                "count", cercasRemovidas
+        );
     }
 
     /**
@@ -353,6 +358,42 @@ public class FenceUtils {
         } catch (IllegalArgumentException ex) {
             return Material.OAK_FENCE;
         }
+    }
+
+    private static String getMessage(String key) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("JocoTerrenos");
+        if (plugin != null) {
+            try {
+                java.lang.reflect.Method m = plugin.getClass().getMethod("getMessageService");
+                Object svc = m.invoke(plugin);
+                if (svc != null) {
+                    java.lang.reflect.Method get = svc.getClass().getMethod("get", String.class);
+                    return (String) get.invoke(svc, key);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        // Fallback simples à própria chave
+        return key;
+    }
+
+    private static String format(String key, Object... kv) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("JocoTerrenos");
+        if (plugin != null) {
+            try {
+                java.lang.reflect.Method m = plugin.getClass().getMethod("getMessageService");
+                Object svc = m.invoke(plugin);
+                if (svc != null) {
+                    // constrói placeholders map via helper estático
+                    java.lang.reflect.Method ph = svc.getClass().getMethod("placeholders", Object[].class);
+                    Object map = ph.invoke(null, (Object) kv);
+                    java.lang.reflect.Method fmt = svc.getClass().getMethod("format", String.class, java.util.Map.class);
+                    return (String) fmt.invoke(svc, key, map);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return key;
     }
 
 }

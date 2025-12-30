@@ -1,0 +1,107 @@
+# Default messages (English - United States)
+# Use & for colors. Placeholders: {player}, {price}, {size}, {name}
+
+prefix: '&6[Land]&r '
+
+# General
+only-player: '&cThis command can only be executed by a player!'
+invalid-number: '&cPlease enter a valid number!'
+invalid-size: '&cThe size must be greater than zero!'
+invalid-location: '&cInvalid location!'
+
+# Help
+help.title: '&a&l=== Land Commands ==='
+help.lines:
+  - '&7/terreno comprar [size] [name] &f- Buy a land'
+  - '&7/terreno preco [size] &f- Show the price of an NxN land'
+  - '&7/terreno listar &f- List your lands'
+  - '&7/terreno info [name] &f- Show info about current land or by name'
+  - '&7/terreno deletar [name] &f- Delete a land'
+  - '&7/terreno pvp [name] &f- Toggle PvP'
+  - '&7/terreno mobs [name] &f- Toggle Mobs'
+  - '&7/terreno publico [name] &f- Toggle public access'
+  - '&7/terreno tp [name] &f- Teleport to a safe spot inside the land'
+
+# Fences
+cercar.usage: '&cUsage: /cercar <area_in_m²>'
+removercerca.usage: '&cUsage: /removercerca <size>'
+removercerca.example1: '&7Example: /removercerca 10'
+removercerca.example2: '&7This will remove fences around a 10x10 area around you'
+resizecerca.usage: '&cUsage: /resizecerca <old_size> <new_size>'
+resizecerca.example1: '&7Example: /resizecerca 10 20'
+resizecerca.example2: '&7This will resize a 10x10 area to 20x20'
+resizecerca.iguais: '&cThe sizes are equal! No changes needed.'
+
+fences.removed.success: '&aFences removed successfully!\n&7Area: {size}x{size} blocks ({area}m²)\n&7Total fences removed: {count}'
+fences.resize.success: '&aArea {acao} successfully!\n&7Old size: {old}x{old} ({oldArea}m²)\n&7New size: {new}x{new} ({newArea}m²)\n&7Fences removed: {removed}\n&7Fences placed: {placed}'
+action.expandida: 'expanded'
+action.reduzida: 'reduced'
+
+# Land buy
+terreno.comprar.usage-title: ''
+terreno.comprar.usage1: '&cUsage: /terreno comprar [size] [name]'
+terreno.comprar.usage2: '&7Example: /terreno comprar 10 house'
+terreno.comprar.nome-longo: '&cLand name cannot be longer than 15 characters!'
+terreno.comprar.tamanho-invalido-min: '&cMinimum size: {min}'
+terreno.comprar.tamanho-invalido-max: '&cMaximum size: {max}'
+terreno.comprar.preco: '&7Land price: &e{price}'
+terreno.comprar.sucesso: '&aLand purchased successfully!'
+terreno.comprar.info-dono: '&7Owner: &f{player}'
+terreno.comprar.info-terreno: '&7Land: &f{name}'
+terreno.comprar.info-tamanho: '&7Size: {size}x{size}'
+terreno.comprar.falha: '&cCould not purchase land. Check balance, unique name and parameters.'
+
+# Land list
+terreno.listar.vazio: '&eYou do not own any lands.'
+terreno.listar.titulo: '&a&l=== Your Lands ==='
+terreno.listar.linha: '&7#{id} &7- &6{name}: &fSize: &e{size}x{size} &f- PvP: {pvp} &f- Mobs: {mobs}'
+
+# Land info
+terreno.info.nao-no-terreno: '&eYou are not currently in any land.'
+terreno.info.nao-encontrado: '&eLand not found.'
+terreno.info.titulo: '&a&l=== Land Information ==='
+terreno.info.dono: '&7Owner: &f{owner}'
+terreno.info.nome: '&7Land: &f{name}'
+terreno.info.tamanho: '&7Size: &f{size}x{size}'
+terreno.info.localizacao: '&7Location: &f{location}'
+terreno.info.pvp: '&7PvP: {pvp}'
+terreno.info.mobs: '&7Mobs: {mobs}'
+terreno.info.publico: '&7Public access: {public}'
+terreno.info.membros: '&7Members: &f{count}'
+
+# Land delete
+terreno.deletar.usage: '&cUsage: /terreno deletar [name]'
+terreno.deletar.sucesso: '&aLand deleted successfully!'
+terreno.deletar.erro: '&cError deleting land!'
+terreno.deletar.id-invalido: '&cPlease enter a valid ID!'
+
+# Toggle generic
+terreno.toggle.nao-dono: '&cYou are not the owner of this land!'
+terreno.toggle.erro: '&cAn error occurred while updating the land!'
+terreno.toggle.sucesso: '&6[Land] &7Configuration updated successfully for &f{name}&7!'
+terreno.toggle.pvp: '&6[Land] &7PvP {status}!'
+terreno.toggle.mobs: '&6[Land] &7Mobs {status}!'
+terreno.toggle.publico: '&6[Land] &7Public access {status}!'
+terreno.pvp.usage: '&cUsage: /terreno pvp [name]'
+terreno.mobs.usage: '&cUsage: /terreno mobs [name]'
+terreno.publico.usage: '&cUsage: /terreno publico [name]'
+
+status.on: '&aON'
+status.off: '&cOFF'
+status.habilitado: '&aenabled'
+status.desabilitado: '&cdisabled'
+status.sim: '&aYes'
+status.nao: '&cNo'
+
+# Teleport
+terreno.tp.usage: '&cUsage: /terreno tp [name]'
+terreno.tp.sem-permissao: '&cYou do not have permission to teleport to this land!'
+terreno.tp.sucesso: '&aTeleported to a safe spot in land &f{name}&a!'
+terreno.tp.falha: '&cCould not find a safe spot to teleport in this land.'
+
+# Price
+terreno.preco.usage1: '&cUsage: /terreno preco [size]'
+terreno.preco.usage2: '&7Example: /terreno preco 10'
+terreno.preco.min: '&cMinimum size: {min}'
+terreno.preco.max: '&cMaximum size: {max}'
+terreno.preco.valor: '&aPrice for land {size}x{size}: &e{price}'

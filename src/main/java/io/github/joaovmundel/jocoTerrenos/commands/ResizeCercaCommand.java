@@ -1,5 +1,6 @@
 package io.github.joaovmundel.jocoTerrenos.commands;
 
+import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -10,17 +11,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResizeCercaCommand implements CommandExecutor {
 
+    private final MessageService messages;
+
+    public ResizeCercaCommand(MessageService messages) {
+        this.messages = messages;
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cEste comando só pode ser executado por um jogador!");
+            messages.send(sender, "only-player");
             return true;
         }
 
         if (args.length < 2) {
-            player.sendMessage("§cUso: /resizecerca <tamanho_antigo> <tamanho_novo>");
-            player.sendMessage("§7Exemplo: /resizecerca 10 20");
-            player.sendMessage("§7Isso redimensionará uma área de 10x10 para 20x20");
+            messages.send(player, "resizecerca.usage");
+            messages.send(player, "resizecerca.example1");
+            messages.send(player, "resizecerca.example2");
             return true;
         }
 
@@ -38,11 +45,10 @@ public class ResizeCercaCommand implements CommandExecutor {
             player.sendMessage(resultado);
 
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira números válidos!");
+            messages.send(player, "invalid-number");
             return true;
         }
 
         return true;
     }
 }
-

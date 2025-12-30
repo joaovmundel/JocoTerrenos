@@ -1,0 +1,107 @@
+# Mensagens padrão (Português - Brasil)
+# Use & para cores. Placeholders: {player}, {price}, {size}, {name}
+
+prefix: '&6[Terreno]&r '
+
+# Gerais
+only-player: '&cEste comando só pode ser executado por um jogador!'
+invalid-number: '&cPor favor, insira um número válido!'
+invalid-size: '&cO tamanho deve ser maior que zero!'
+invalid-location: '&cLocalização inválida!'
+
+# Ajuda
+help.title: '&a&l=== Comandos de Terreno ==='
+help.lines:
+  - '&7/terreno comprar [tamanho] [nome] &f- Compra um terreno'
+  - '&7/terreno preco [tamanho] &f- Mostra o preço de um terreno NxN'
+  - '&7/terreno listar &f- Lista seus terrenos'
+  - '&7/terreno info [nome] &f- Informações do terreno atual ou pelo nome'
+  - '&7/terreno deletar [nome] &f- Deleta um terreno'
+  - '&7/terreno pvp [nome] &f- Alterna PvP'
+  - '&7/terreno mobs [nome] &f- Alterna Mobs'
+  - '&7/terreno publico [nome] &f- Alterna acesso público'
+  - '&7/terreno tp [nome] &f- Teleporta para um local seguro dentro do terreno'
+
+# Cercas
+cercar.usage: '&cUso: /cercar <área_em_m²>'
+removercerca.usage: '&cUso: /removercerca <tamanho>'
+removercerca.example1: '&7Exemplo: /removercerca 10'
+removercerca.example2: '&7Isso removerá as cercas de uma área 10x10 ao seu redor'
+resizecerca.usage: '&cUso: /resizecerca <tamanho_antigo> <tamanho_novo>'
+resizecerca.example1: '&7Exemplo: /resizecerca 10 20'
+resizecerca.example2: '&7Isso redimensionará uma área de 10x10 para 20x20'
+resizecerca.iguais: '&cOs tamanhos são iguais! Nenhuma alteração necessária.'
+
+fences.removed.success: '&aCercas removidas com sucesso!\n&7Área: {size}x{size} blocos ({area}m²)\n&7Total de cercas removidas: {count}'
+fences.resize.success: '&aÁrea {acao} com sucesso!\n&7Tamanho antigo: {old}x{old} ({oldArea}m²)\n&7Tamanho novo: {new}x{new} ({newArea}m²)\n&7Cercas removidas: {removed}\n&7Cercas colocadas: {placed}'
+action.expandida: 'expandida'
+action.reduzida: 'reduzida'
+
+# Terreno comprar
+terreno.comprar.usage-title: ''
+terreno.comprar.usage1: '&cUso: /terreno comprar [tamanho] [nome]'
+terreno.comprar.usage2: '&7Exemplo: /terreno comprar 10 casa'
+terreno.comprar.nome-longo: '&cO nome do terreno não pode ter mais que 15 caracteres!'
+terreno.comprar.tamanho-invalido-min: '&cTamanho mínimo: {min}'
+terreno.comprar.tamanho-invalido-max: '&cTamanho máximo: {max}'
+terreno.comprar.preco: '&7Preço do terreno: &e{price}'
+terreno.comprar.sucesso: '&aTerreno comprado com sucesso!'
+terreno.comprar.info-dono: '&7Dono: &f{player}'
+terreno.comprar.info-terreno: '&7Terreno: &f{name}'
+terreno.comprar.info-tamanho: '&7Tamanho: {size}x{size}'
+terreno.comprar.falha: '&cNão foi possível comprar o terreno. Verifique saldo, nome único e parâmetros.'
+
+# Terreno listar
+terreno.listar.vazio: '&eVocê não possui terrenos.'
+terreno.listar.titulo: '&a&l=== Seus Terrenos ==='
+terreno.listar.linha: '&7#{id} &7- &6{name}: &fTamanho: &e{size}x{size} &f- PvP: {pvp} &f- Mobs: {mobs}'
+
+# Terreno info
+terreno.info.nao-no-terreno: '&eVocê não está em nenhum terreno no momento.'
+terreno.info.nao-encontrado: '&eTerreno não encontrado.'
+terreno.info.titulo: '&a&l=== Informações do Terreno ==='
+terreno.info.dono: '&7Dono: &f{owner}'
+terreno.info.nome: '&7Terreno: &f{name}'
+terreno.info.tamanho: '&7Tamanho: &f{size}x{size}'
+terreno.info.localizacao: '&7Localização: &f{location}'
+terreno.info.pvp: '&7PvP: {pvp}'
+terreno.info.mobs: '&7Mobs: {mobs}'
+terreno.info.publico: '&7Acesso Público: {public}'
+terreno.info.membros: '&7Membros: &f{count}'
+
+# Terreno deletar
+terreno.deletar.usage: '&cUso: /terreno deletar [nome]'
+terreno.deletar.sucesso: '&aTereno deletado com sucesso!'
+terreno.deletar.erro: '&cErro ao deletar terreno!'
+terreno.deletar.id-invalido: '&cPor favor, insira um ID válido!'
+
+# Toggle genérico
+terreno.toggle.nao-dono: '&cVocê não é o dono deste terreno!'
+terreno.toggle.erro: '&cOcorreu um erro ao atualizar o terreno!'
+terreno.toggle.sucesso: '&6[Terreno] &7Configuração atualizada com sucesso para &f{name}&7!'
+terreno.toggle.pvp: '&6[Terreno] &7PvP {status}!'
+terreno.toggle.mobs: '&6[Terreno] &7Mobs {status}!'
+terreno.toggle.publico: '&6[Terreno] &7Acesso público {status}!'
+terreno.pvp.usage: '&cUso: /terreno pvp [nome]'
+terreno.mobs.usage: '&cUso: /terreno mobs [nome]'
+terreno.publico.usage: '&cUso: /terreno publico [nome]'
+
+status.on: '&aON'
+status.off: '&cOFF'
+status.habilitado: '&ahabilitado'
+status.desabilitado: '&cdesabilitado'
+status.sim: '&aSim'
+status.nao: '&cNão'
+
+# Teleporte
+terreno.tp.usage: '&cUso: /terreno tp [nome]'
+terreno.tp.sem-permissao: '&cVocê não tem permissão para teleportar para este terreno!'
+terreno.tp.sucesso: '&aTeleportado para um local seguro no terreno &f{name}&a!'
+terreno.tp.falha: '&cNão foi possível encontrar um local seguro para teleportar neste terreno.'
+
+# Preço
+terreno.preco.usage1: '&cUso: /terreno preco [tamanho]'
+terreno.preco.usage2: '&7Exemplo: /terreno preco 10'
+terreno.preco.min: '&cTamanho mínimo: {min}'
+terreno.preco.max: '&cTamanho máximo: {max}'
+terreno.preco.valor: '&aPreço do terreno {size}x{size}: &e{price}'

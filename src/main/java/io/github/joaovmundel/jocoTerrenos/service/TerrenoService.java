@@ -101,13 +101,6 @@ public class TerrenoService {
         return repository.findByDonoUUID(playerUUID);
     }
 
-    /**
-     * Busca um terreno por ID
-     */
-    public Terreno buscarTerreno(Long id) throws TerrenoNotFoundException {
-        Optional<Terreno> optionalTerreno = repository.findById(id);
-        return optionalTerreno.orElseThrow(() -> new TerrenoNotFoundException("Ocorreu um erro ao buscar o terreno com ID " + id + "."));
-    }
 
     /**
      * Busca um terreno por nome
@@ -323,14 +316,14 @@ public class TerrenoService {
             List<Terreno> terrenos = repository.findAll();
             for (Terreno t : terrenos) {
                 LocationRaw raw = LocationUtils.parsearLocalizacaoRaw(t.getLocation());
-                if (raw == null || raw.worldName == null) continue;
-                if (!raw.worldName.equals(playerWorld)) continue;
+                if (raw == null || raw.worldName() == null) continue;
+                if (!raw.worldName().equals(playerWorld)) continue;
                 int size = t.getSize();
                 double halfSize = size / 2.0;
-                double minX = raw.x - halfSize;
-                double maxX = raw.x + halfSize;
-                double minZ = raw.z - halfSize;
-                double maxZ = raw.z + halfSize;
+                double minX = raw.x() - halfSize;
+                double maxX = raw.x() + halfSize;
+                double minZ = raw.z() - halfSize;
+                double maxZ = raw.z() + halfSize;
                 if (playerX >= minX && playerX <= maxX && playerZ >= minZ && playerZ <= maxZ) {
                     return t;
                 }

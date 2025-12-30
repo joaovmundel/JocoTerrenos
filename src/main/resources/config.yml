@@ -1,5 +1,8 @@
 # Configurações do JocoTerrenos
 
+# Idioma ativo para mensagens (ex.: pt_BR, en_US)
+language: pt_BR
+
 # Configurações de Banco de Dados
 database:
   # Tipo de banco de dados: SQLITE, MYSQL, POSTGRESQL

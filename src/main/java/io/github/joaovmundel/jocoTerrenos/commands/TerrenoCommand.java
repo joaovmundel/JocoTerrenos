@@ -4,6 +4,7 @@ import io.github.joaovmundel.jocoTerrenos.JocoTerrenos;
 import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
+import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
@@ -39,7 +40,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cEste comando só pode ser executado por um jogador!");
+            plugin.getMessageService().send(sender, "only-player");
             return true;
         }
 
@@ -68,10 +69,11 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleComprar(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("");
-            player.sendMessage("§cUso: /terreno comprar [tamanho] [nome]");
-            player.sendMessage("§7Exemplo: /terreno comprar 10 casa");
-            player.sendMessage("");
+            String usageTitle = plugin.getMessageService().get("terreno.comprar.usage-title");
+            if (usageTitle != null && !usageTitle.isEmpty()) player.sendMessage(usageTitle);
+            plugin.getMessageService().send(player, "terreno.comprar.usage1");
+            plugin.getMessageService().send(player, "terreno.comprar.usage2");
+            if (usageTitle != null && !usageTitle.isEmpty()) player.sendMessage(usageTitle);
             return true;
         }
 
@@ -80,34 +82,34 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             String nome = joinArgs(args, 2);
 
             if (nome.length() > 15) {
-                player.sendMessage("§cO nome do terreno não pode ter mais que 12 caracteres!");
+                plugin.getMessageService().send(player, "terreno.comprar.nome-longo");
                 return true;
             }
 
             if (!terrenoService.tamanhoValido(tamanho)) {
-                player.sendMessage("§cTamanho mínimo: " + terrenoService.getTamanhoMinimo());
-                player.sendMessage("§cTamanho máximo: " + terrenoService.getTamanhoMaximo());
+                plugin.getMessageService().send(player, "terreno.comprar.tamanho-invalido-min", MessageService.placeholders("min", terrenoService.getTamanhoMinimo()));
+                plugin.getMessageService().send(player, "terreno.comprar.tamanho-invalido-max", MessageService.placeholders("max", terrenoService.getTamanhoMaximo()));
                 return true;
             }
 
             double custo = terrenoService.calcularCustoTerreno(tamanho);
-            player.sendMessage("§7Preço do terreno: §e" + String.format("%.2f", custo));
+            plugin.getMessageService().send(player, "terreno.comprar.preco", MessageService.placeholders("price", String.format("%.2f", custo)));
 
             Optional<Terreno> created = terrenoService.criarTerreno(player, tamanho, nome);
 
             if (created.isPresent()) {
                 FenceUtils.colocarCercas(player, tamanho);
                 Terreno terreno = created.get();
-                player.sendMessage("§aTerreno comprado com sucesso!");
-                player.sendMessage("§7Dono: §f" + player.getName());
-                player.sendMessage("§7Terreno: §f" + terreno.getName());
-                player.sendMessage("§7Tamanho: " + tamanho + "x" + tamanho);
+                plugin.getMessageService().send(player, "terreno.comprar.sucesso");
+                plugin.getMessageService().send(player, "terreno.comprar.info-dono", MessageService.placeholders("player", player.getName()));
+                plugin.getMessageService().send(player, "terreno.comprar.info-terreno", MessageService.placeholders("name", terreno.getName()));
+                plugin.getMessageService().send(player, "terreno.comprar.info-tamanho", MessageService.placeholders("size", tamanho));
             } else {
-                player.sendMessage("§cNão foi possível comprar o terreno. Verifique saldo, nome único e parâmetros.");
+                plugin.getMessageService().send(player, "terreno.comprar.falha");
                 return false;
             }
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um número válido para tamanho!");
+            plugin.getMessageService().send(player, "invalid-number");
             return false;
         }
 
@@ -128,20 +130,22 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         List<Terreno> terrenos = terrenoService.listarTerrenosDoJogador(playerUUID);
 
         if (terrenos.isEmpty()) {
-            player.sendMessage("§eVocê não possui terrenos.");
+            plugin.getMessageService().send(player, "terreno.listar.vazio");
             return true;
         }
-        player.sendMessage("§a§l=== Seus Terrenos ===");
+        player.sendMessage(plugin.getMessageService().get("terreno.listar.titulo"));
         for (Terreno terreno : terrenos) {
-            player.sendMessage(String.format(
-                    "§7#%d §7- §6%s: §fTamanho: §e%dx%d §f- PvP: %s §f- Mobs: %s",
-                    terreno.getId(),
-                    StringUtils.capitalizeFirstLetter(terreno.getName()),
-                    terreno.getSize(),
-                    terreno.getSize(),
-                    terreno.getPvp() ? "§aON" : "§cOFF",
-                    terreno.getMobs() ? "§aON" : "§cOFF"
-            ));
+            String pvp = terreno.getPvp() ? plugin.getMessageService().get("status.on") : plugin.getMessageService().get("status.off");
+            String mobs = terreno.getMobs() ? plugin.getMessageService().get("status.on") : plugin.getMessageService().get("status.off");
+            String line = plugin.getMessageService().format("terreno.listar.linha",
+                    MessageService.placeholders(
+                            "id", terreno.getId(),
+                            "name", StringUtils.capitalizeFirstLetter(terreno.getName()),
+                            "size", terreno.getSize(),
+                            "pvp", pvp,
+                            "mobs", mobs
+                    ));
+            player.sendMessage(line);
         }
 
         return true;
@@ -151,12 +155,9 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         if (args.length < 2) {
             CompletableFuture<Terreno> asyncSearch = terrenoService.getCurrentTerrenoAsync(player);
 
-            asyncSearch.thenAccept(terreno -> {
-                Bukkit.getScheduler().runTask(plugin, () -> exibirInfo(player, terreno));
-            }).exceptionally(ex -> {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    player.sendMessage("§eVocê não está em nenhum terreno no momento.");
-                });
+            asyncSearch.thenAccept(terreno -> Bukkit.getScheduler().runTask(plugin, () -> exibirInfo(player, terreno))).exceptionally(
+    ex -> {
+                Bukkit.getScheduler().runTask(plugin, () -> plugin.getMessageService().send(player, "terreno.info.nao-no-terreno"));
                 logger.warning(ex.getMessage());
                 return null;
             });
@@ -170,7 +171,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             Terreno terreno = terrenoService.buscarTerrenoPorNome(donoUUID, nome);
             exibirInfo(player, terreno);
         } catch (TerrenoNotFoundException ex) {
-            player.sendMessage("§eTerreno não encontrado.");
+            plugin.getMessageService().send(player, "terreno.info.nao-encontrado");
         }
         return true;
     }
@@ -178,20 +179,20 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private void exibirInfo(Player player, Terreno t) {
         String donoNome = Bukkit.getOfflinePlayer(java.util.UUID.fromString(t.getDonoUUID())).getName();
-        player.sendMessage("§a§l=== Informações do Terreno ===");
-        player.sendMessage("§7Dono: §f" + (donoNome != null ? donoNome : t.getDonoUUID()));
-        player.sendMessage("§7Terreno: §f" + t.getName());
-        player.sendMessage("§7Tamanho: §f" + t.getSize() + "x" + t.getSize());
-        player.sendMessage("§7Localização: §f" + LocationUtils.formattedLocation(t.getLocation()));
-        player.sendMessage("§7PvP: " + (t.getPvp() ? "§aHabilitado" : "§cDesabilitado"));
-        player.sendMessage("§7Mobs: " + (t.getMobs() ? "§aHabilitado" : "§cDesabilitado"));
-        player.sendMessage("§7Acesso Público: " + (t.getPublicAccess() ? "§aSim" : "§cNão"));
-        player.sendMessage("§7Membros: §f" + t.getMembers().size());
+        player.sendMessage(plugin.getMessageService().get("terreno.info.titulo"));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.dono", MessageService.placeholders("owner", (donoNome != null ? donoNome : t.getDonoUUID()))));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.nome", MessageService.placeholders("name", t.getName())));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.tamanho", MessageService.placeholders("size", t.getSize())));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.localizacao", MessageService.placeholders("location", LocationUtils.formattedLocation(t.getLocation()))));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.pvp", MessageService.placeholders("pvp", t.getPvp() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.mobs", MessageService.placeholders("mobs", t.getMobs() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.publico", MessageService.placeholders("public", t.getPublicAccess() ? plugin.getMessageService().get("status.sim") : plugin.getMessageService().get("status.nao"))));
+        player.sendMessage(plugin.getMessageService().format("terreno.info.membros", MessageService.placeholders("count", t.getMembers().size())));
     }
 
     private boolean handleDeletar(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno deletar [nome]");
+            plugin.getMessageService().send(player, "terreno.deletar.usage");
             return true;
         }
 
@@ -200,21 +201,20 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             String playerUUID = player.getUniqueId().toString();
             Terreno terreno = terrenoService.buscarTerrenoPorNome(playerUUID, name);
 
-            // Deleta o terreno
             if (terrenoService.deletarTerreno(name, playerUUID)) {
                 Location loc = LocationUtils.parsearLocalizacao(terreno.getLocation());
                 if (loc != null) {
                     FenceUtils.removerCercas(loc, terreno.getSize());
                 }
-                player.sendMessage("§aTereno deletado com sucesso!");
+                plugin.getMessageService().send(player, "terreno.deletar.sucesso");
             } else {
-                player.sendMessage("§cErro ao deletar terreno!");
+                plugin.getMessageService().send(player, "terreno.deletar.erro");
             }
 
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um ID válido!");
+            plugin.getMessageService().send(player, "terreno.deletar.id-invalido");
         } catch (TerrenoNotFoundException e) {
-            player.sendMessage("§cTerreno não encontrado!");
+            plugin.getMessageService().send(player, "terreno.info.nao-encontrado");
             logger.warning(e.getMessage());
         }
 
@@ -223,7 +223,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleTogglePvp(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno pvp [nome]");
+            plugin.getMessageService().send(player, "terreno.pvp.usage");
             return true;
         }
 
@@ -232,7 +232,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleToggleMobs(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno mobs [nome]");
+            plugin.getMessageService().send(player, "terreno.mobs.usage");
             return true;
         }
 
@@ -241,7 +241,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleTogglePublico(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno publico [nome]");
+            plugin.getMessageService().send(player, "terreno.publico.usage");
             return true;
         }
 
@@ -253,7 +253,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             String playerUUID = player.getUniqueId().toString();
 
             if (!terrenoService.isDono(nome, playerUUID)) {
-                player.sendMessage("§cVocê não é o dono deste terreno!");
+                plugin.getMessageService().send(player, "terreno.toggle.nao-dono");
                 return true;
             }
 
@@ -265,43 +265,43 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                     success = terrenoService.togglePvp(nome, playerUUID);
                     Terreno t1 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
                     if (t1 == null) {
-                        player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
+                        plugin.getMessageService().send(player, "terreno.toggle.erro");
                         return true;
                     }
-                    mensagem = "§6[Terreno] §7PvP " + (t1.getPvp() ? "§ahabilitado" : "§cdesabilitado") + "!";
+                    mensagem = plugin.getMessageService().format("terreno.toggle.pvp", MessageService.placeholders("status", (t1.getPvp() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
                     break;
                 case "mobs":
                     success = terrenoService.toggleMobs(nome, playerUUID);
                     Terreno t2 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
                     if (t2 == null) {
-                        player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
+                        plugin.getMessageService().send(player, "terreno.toggle.erro");
                         return true;
                     }
-                    mensagem = "§6[Terreno] §7Mobs " + (t2.getMobs() ? "§ahabilitados" : "§cdesabilitados") + "!";
+                    mensagem = plugin.getMessageService().format("terreno.toggle.mobs", MessageService.placeholders("status", (t2.getMobs() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
                     break;
                 case "publico":
                     success = terrenoService.togglePublico(nome, playerUUID);
                     Terreno t3 = terrenoService.buscarTerrenoPorNome(playerUUID, nome);
                     if (t3 == null) {
-                        player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
+                        plugin.getMessageService().send(player, "terreno.toggle.erro");
                         return true;
                     }
-                    mensagem = "§6[Terreno] §7Acesso público " + (t3.getPublicAccess() ? "§ahabilitado" : "§cdesabilitado") + "!";
+                    mensagem = plugin.getMessageService().format("terreno.toggle.publico", MessageService.placeholders("status", (t3.getPublicAccess() ? plugin.getMessageService().get("status.habilitado") : plugin.getMessageService().get("status.desabilitado"))));
                     break;
             }
 
             if (success) {
                 player.sendMessage(mensagem);
-                player.sendMessage("§6[Terreno] §7Configuração atualizada com sucesso para §f" + nome + "§7!");
+                plugin.getMessageService().send(player, "terreno.toggle.sucesso", MessageService.placeholders("name", nome));
             } else {
-                player.sendMessage("§cOcorreu um erro ao atualizar o terreno!");
+                plugin.getMessageService().send(player, "terreno.toggle.erro");
                 logger.warning("Erro ao atualizar configuração do terreno para " + setting);
                 logger.warning("Jogador: " + player.getName() + " - Terreno: " + nome);
                 logger.warning("Sucesso: " + success);
             }
 
         } catch (TerrenoNotFoundException e) {
-            player.sendMessage("§cErro ao atualizar terreno!");
+            plugin.getMessageService().send(player, "terreno.toggle.erro");
             logger.warning(e.getMessage());
         }
 
@@ -310,7 +310,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleTp(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno tp [nome]");
+            plugin.getMessageService().send(player, "terreno.tp.usage");
             return true;
         }
         try {
@@ -318,7 +318,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             String playerUUID = player.getUniqueId().toString();
 
             if (!(terrenoService.isDono(name, playerUUID))) {
-                player.sendMessage("§cVocê não tem permissão para teleportar para este terreno!");
+                plugin.getMessageService().send(player, "terreno.tp.sem-permissao");
                 return true;
             }
 
@@ -326,12 +326,12 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             if (safeLocOpt.isPresent()) {
                 Location safe = safeLocOpt.get();
                 player.teleport(safe);
-                player.sendMessage("§aTeleportado para um local seguro no terreno §f" + name + "§a!");
+                plugin.getMessageService().send(player, "terreno.tp.sucesso", MessageService.placeholders("name", name));
             } else {
-                player.sendMessage("§cNão foi possível encontrar um local seguro para teleportar neste terreno.");
+                plugin.getMessageService().send(player, "terreno.tp.falha");
             }
         } catch (TerrenoNotFoundException e) {
-            player.sendMessage("§cTerreno não encontrado!");
+            plugin.getMessageService().send(player, "terreno.info.nao-encontrado");
             logger.warning("[JocoTerrenos] TerrenoCommand: " + e.getMessage());
         }
         return true;
@@ -339,39 +339,33 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private boolean handlePreco(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUso: /terreno preco [tamanho]");
-            player.sendMessage("§7Exemplo: /terreno preco 10");
+            plugin.getMessageService().send(player, "terreno.preco.usage1");
+            plugin.getMessageService().send(player, "terreno.preco.usage2");
             return true;
         }
         try {
             int tamanho = Integer.parseInt(args[1]);
             if (tamanho < terrenoService.getTamanhoMinimo()) {
-                player.sendMessage("§cTamanho mínimo: " + terrenoService.getTamanhoMinimo());
+                plugin.getMessageService().send(player, "terreno.preco.min", MessageService.placeholders("min", terrenoService.getTamanhoMinimo()));
                 return true;
             }
             if (tamanho > terrenoService.getTamanhoMaximo()) {
-                player.sendMessage("§cTamanho máximo: " + terrenoService.getTamanhoMaximo());
+                plugin.getMessageService().send(player, "terreno.preco.max", MessageService.placeholders("max", terrenoService.getTamanhoMaximo()));
                 return true;
             }
             double custo = terrenoService.calcularCustoTerreno(tamanho);
-            player.sendMessage("§aPreço do terreno " + tamanho + "x" + tamanho + ": §e" + String.format("%.2f", custo));
+            plugin.getMessageService().send(player, "terreno.preco.valor", MessageService.placeholders("size", tamanho, "price", String.format("%.2f", custo)));
         } catch (NumberFormatException e) {
-            player.sendMessage("§cPor favor, insira um número válido para tamanho!");
+            plugin.getMessageService().send(player, "invalid-number");
         }
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§a§l=== Comandos de Terreno ===");
-        player.sendMessage("§7/terreno comprar [tamanho] [nome] §f- Compra um terreno");
-        player.sendMessage("§7/terreno preco [tamanho] §f- Mostra o preço de um terreno NxN");
-        player.sendMessage("§7/terreno listar §f- Lista seus terrenos");
-        player.sendMessage("§7/terreno info [nome] §f- Informações do terreno atual ou pelo nome");
-        player.sendMessage("§7/terreno deletar [nome] §f- Deleta um terreno");
-        player.sendMessage("§7/terreno pvp [nome] §f- Alterna PvP");
-        player.sendMessage("§7/terreno mobs [nome] §f- Alterna Mobs");
-        player.sendMessage("§7/terreno publico [nome] §f- Alterna acesso público");
-        player.sendMessage("§7/terreno tp [nome] §f- Teleporta para um local seguro dentro do terreno");
+        player.sendMessage(plugin.getMessageService().get("help.title"));
+        for (String line : plugin.getMessageService().getList("help.lines")) {
+            player.sendMessage(line);
+        }
     }
 
     @Override

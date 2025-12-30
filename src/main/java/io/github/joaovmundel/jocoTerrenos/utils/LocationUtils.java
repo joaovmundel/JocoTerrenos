@@ -89,18 +89,7 @@ public class LocationUtils {
     }
 
     /**
-     * DTO simples para parsing sem Bukkit.
-     */
-    public static final class LocationRaw {
-        public final String worldName;
-        public final double x;
-        public final double y;
-        public final double z;
-        public LocationRaw(String worldName, double x, double y, double z) {
-            this.worldName = worldName;
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-    }
+         * DTO simples para parsing sem Bukkit.
+         */
+        public record LocationRaw(String worldName, double x, double y, double z) { }
 }
