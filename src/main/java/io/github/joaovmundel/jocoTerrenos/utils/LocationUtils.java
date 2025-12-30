@@ -24,7 +24,7 @@ public class LocationUtils {
     }
 
     /**
-     * Formata a localização para string
+     * Formata a localização para "string"
      */
     public static String formatarLocalizacao(Location loc) {
         return String.format("%s:%.2f:%.2f:%.2f",
@@ -36,10 +36,10 @@ public class LocationUtils {
     }
 
     /**
-     * Parseia uma string de localização para objeto Location
+     * Converte uma "string" de localização para objeto Location
      * Formato esperado: "world:x:y:z"
      */
-    public static Location parsearLocalizacao(String locationStr) {
+    public static Location converterLocalizacao(String locationStr) {
         if (locationStr == null || locationStr.isEmpty()) {
             return null;
         }
@@ -71,7 +71,7 @@ public class LocationUtils {
      * Versão "raw" que não usa Bukkit APIs, segura para threads assíncronas.
      * Retorna null se o formato for inválido.
      */
-    public static LocationRaw parsearLocalizacaoRaw(String locationStr) {
+    public static LocationRaw converterLocalizacaoRaw(String locationStr) {
         if (locationStr == null || locationStr.isEmpty()) {
             return null;
         }
@@ -89,7 +89,8 @@ public class LocationUtils {
     }
 
     /**
-         * DTO simples para parsing sem Bukkit.
-         */
-        public record LocationRaw(String worldName, double x, double y, double z) { }
+     * DTO simples para parsing sem Bukkit.
+     */
+    public record LocationRaw(String worldName, double x, double y, double z) {
+    }
 }

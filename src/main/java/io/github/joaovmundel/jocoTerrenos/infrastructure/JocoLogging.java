@@ -17,11 +17,6 @@ public class JocoLogging {
         logging.info("[JocoTerrenos] " + message);
     }
 
-    public void severe(String message) {
-        logging.severe("[JocoTerrenos] " + className);
-        logging.severe("[JocoTerrenos] " + message);
-    }
-
     public void warning(String message) {
         logging.warning("[JocoTerrenos] " + className);
         logging.warning("[JocoTerrenos] " + message);

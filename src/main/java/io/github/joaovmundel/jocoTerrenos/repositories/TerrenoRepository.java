@@ -5,7 +5,11 @@ import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoMember;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoRole;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +27,7 @@ public class TerrenoRepository {
     }
 
     /**
-     * Cria um novo terreno no banco de dados
+     * Cria um terreno no banco de dados
      */
     public Optional<Terreno> create(Terreno terreno) {
         String sql = """
@@ -64,7 +68,7 @@ public class TerrenoRepository {
     }
 
     /**
-     * Busca um terreno pelo ID
+     * Busca um terreno pelo "ID"
      */
     public Optional<Terreno> findById(Long id) {
         String sql = "SELECT * FROM terrenos WHERE id = ?";
@@ -116,30 +120,6 @@ public class TerrenoRepository {
 
         return terrenos;
     }
-
-    public Terreno findByName(String ownerUUID, String name) {
-        String sql = "SELECT * FROM terrenos WHERE name = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, ownerUUID + "+" + name);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    Terreno terreno = mapResultSetToTerreno(rs);
-                    terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
-                    return terreno;
-                }
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao buscar terreno por nome: " + name, e);
-        }
-
-        return null;
-    }
-
 
     /**
      * Busca todos os terrenos
@@ -203,7 +183,7 @@ public class TerrenoRepository {
     }
 
     /**
-     * Deleta um terreno pelo ID
+     * Deleta um terreno pelo "ID"
      */
     public boolean delete(Long id) {
         String sql = "DELETE FROM terrenos WHERE id = ?";
@@ -222,28 +202,6 @@ public class TerrenoRepository {
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao deletar terreno: " + id, e);
-        }
-
-        return false;
-    }
-
-    public boolean deleteByName(String ownerUUID, String name) {
-        String sql = "DELETE FROM terrenos WHERE id = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, ownerUUID + "+" + name);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.info("Terreno deletado: " + name);
-                return true;
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao deletar terreno: " + name, e);
         }
 
         return false;
@@ -359,37 +317,6 @@ public class TerrenoRepository {
         }
 
         return members;
-    }
-
-    /**
-     * Busca terrenos onde o jogador é membro
-     */
-    public List<Terreno> findTerrenosByMemberUUID(String memberUUID) {
-        String sql = """
-                    SELECT t.* FROM terrenos t
-                    INNER JOIN terreno_members tm ON t.id = tm.terreno_id
-                    WHERE tm.member_uuid = ?
-                """;
-        List<Terreno> terrenos = new ArrayList<>();
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, memberUUID);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Terreno terreno = mapResultSetToTerreno(rs);
-                    terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
-                    terrenos.add(terreno);
-                }
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao buscar terrenos do membro: " + memberUUID, e);
-        }
-
-        return terrenos;
     }
 
     /**

@@ -119,6 +119,9 @@ cmake-build-*/
 # IntelliJ
 out/
 
+#Qodana
+qodana.yaml
+
 # IntelliJ IDEA fix
 .idea
 

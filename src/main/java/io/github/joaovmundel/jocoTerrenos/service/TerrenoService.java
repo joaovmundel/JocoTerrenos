@@ -6,16 +6,16 @@ import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils.LocationRaw;
 import io.github.joaovmundel.jocoTerrenos.utils.SafeLocationUtils;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class TerrenoService {
 
@@ -28,7 +28,7 @@ public class TerrenoService {
     }
 
     /**
-     * Cria um novo terreno para o jogador com nome
+     * Cria um terreno para o jogador com nome
      */
     public Optional<Terreno> criarTerreno(Player player, int tamanho, String nome) {
         // Valida tamanho
@@ -53,7 +53,7 @@ public class TerrenoService {
         }
         // Calcula custo e verifica saldo
         double custo = calcularCustoTerreno(tamanho);
-        Economy economy = ((io.github.joaovmundel.jocoTerrenos.JocoTerrenos) Bukkit.getPluginManager().getPlugin("JocoTerrenos")).getEconomy();
+        Economy economy = ((io.github.joaovmundel.jocoTerrenos.JocoTerrenos) Objects.requireNonNull(Bukkit.getPluginManager().getPlugin("JocoTerrenos"))).getEconomy();
         if (economy == null) {
             return Optional.empty();
         }
@@ -111,23 +111,6 @@ public class TerrenoService {
         return repository.findByNameKey(key).orElseThrow(() -> new TerrenoNotFoundException("Ocorreu um erro ao buscar o terreno com nome " + nome + "."));
     }
 
-    /**
-     * Deleta um terreno (apenas se o jogador for o dono)
-     */
-    public boolean deletarTerreno(Long id, String playerUUID) {
-        Optional<Terreno> terreno = repository.findById(id);
-
-        if (terreno.isEmpty()) {
-            return false;
-        }
-
-        if (!terreno.get().getDonoUUID().equals(playerUUID)) {
-            return false;
-        }
-
-        return repository.delete(id);
-    }
-
     public boolean deletarTerreno(String name, String playerUUID) throws TerrenoNotFoundException {
         Terreno terreno = buscarTerrenoPorNome(playerUUID, name);
 
@@ -138,46 +121,17 @@ public class TerrenoService {
         return repository.delete(terreno.getId());
     }
 
-    /**
-     * Alterna o PvP do terreno
-     */
-    public boolean togglePvp(Long id, String playerUUID) {
-        return toggleConfiguracao(id, playerUUID, "pvp");
-    }
-
     public boolean togglePvp(String name, String playerUUID) throws TerrenoNotFoundException {
         Terreno terreno = buscarTerrenoPorNome(playerUUID, name);
-        return toggleConfiguracao(terreno.getId(), playerUUID, "pvp");
-    }
-
-    /**
-     * Alterna os Mobs do terreno
-     */
-    public boolean toggleMobs(Long id, String playerUUID) {
-        return toggleConfiguracao(id, playerUUID, "mobs");
+        return toggleConfiguracao(terreno.getName(), playerUUID, "pvp");
     }
 
     public boolean toggleMobs(String nome, String playerUUID) throws TerrenoNotFoundException {
         return toggleConfiguracao(nome, playerUUID, "mobs");
     }
 
-    /**
-     * Alterna o acesso público do terreno
-     */
-    public boolean togglePublico(Long id, String playerUUID) {
-        return toggleConfiguracao(id, playerUUID, "publico");
-    }
-
     public boolean togglePublico(String name, String playerUUID) throws TerrenoNotFoundException {
         return toggleConfiguracao(name, playerUUID, "publico");
-    }
-
-    /**
-     * Verifica se um jogador é dono de um terreno
-     */
-    public boolean isDono(Long terrenoId, String playerUUID) {
-        Optional<Terreno> terreno = repository.findById(terrenoId);
-        return terreno.isPresent() && terreno.get().getDonoUUID().equals(playerUUID);
     }
 
     public boolean isDono(String terrenoName, String playerUUID) throws TerrenoNotFoundException {
@@ -191,7 +145,6 @@ public class TerrenoService {
     public boolean isDono(Terreno terreno, String playerUUID) {
         return terreno.getDonoUUID().equals(playerUUID);
     }
-
 
     /**
      * Obtém o tamanho mínimo configurado
@@ -207,38 +160,6 @@ public class TerrenoService {
         return config.getInt("terrenos.tamanho-maximo", 100);
     }
 
-    /**
-     * Método privado para alternar configurações do terreno
-     */
-    private boolean toggleConfiguracao(Long id, String playerUUID, String tipo) {
-        Optional<Terreno> terreno = repository.findById(id);
-
-        if (terreno.isEmpty()) {
-            return false;
-        }
-
-        Terreno t = terreno.get();
-
-        if (!isDono(t, playerUUID)) {
-            return false;
-        }
-
-        switch (tipo) {
-            case "pvp":
-                t.setPvp(!t.getPvp());
-                break;
-            case "mobs":
-                t.setMobs(!t.getMobs());
-                break;
-            case "publico":
-                t.setPublicAccess(!t.getPublicAccess());
-                break;
-            default:
-                return false;
-        }
-
-        return repository.update(t);
-    }
 
     private boolean toggleConfiguracao(String nome, String playerUUID, String tipo) throws TerrenoNotFoundException {
         Terreno t = buscarTerrenoPorNome(playerUUID, nome);
@@ -264,49 +185,13 @@ public class TerrenoService {
         return repository.update(t);
     }
 
-    // Java
-    public Terreno getCurrentTerreno(Player p) throws TerrenoNotFoundException {
-        Location playerLoc = p.getLocation();
-        String playerWorld = playerLoc.getWorld() != null ? playerLoc.getWorld().getName() : null;
-        double playerX = playerLoc.getX();
-        double playerZ = playerLoc.getZ();
-
-        // Se o repositório permitir, substitua por uma consulta espacial:
-        // List<Terreno> terrenos = repository.findByWorldAndApproxArea(playerWorld, playerX, playerZ);
-        List<Terreno> terrenos = repository.findAll();
-
-        for (Terreno t : terrenos) {
-            Location loc = LocationUtils.parsearLocalizacao(t.getLocation());
-            if (loc == null || loc.getWorld() == null) {
-                continue;
-            }
-            if (playerWorld == null || !loc.getWorld().getName().equals(playerWorld)) {
-                continue;
-            }
-
-            int size = t.getSize();
-            double halfSize = size / 2.0;
-
-            double minX = loc.getX() - halfSize;
-            double maxX = loc.getX() + halfSize;
-            double minZ = loc.getZ() - halfSize;
-            double maxZ = loc.getZ() + halfSize;
-
-            if (playerX >= minX && playerX <= maxX && playerZ >= minZ && playerZ <= maxZ) {
-                return t;
-            }
-        }
-
-        throw new TerrenoNotFoundException("Nenhum terreno encontrado.");
-    }
-
     /**
      * Versão assíncrona que evita bloquear o thread principal.
      * Busca terrenos no repositório e calcula os limites fora da main thread.
      * Nota: não chama APIs Bukkit fora da main thread.
      */
     public CompletableFuture<Terreno> getCurrentTerrenoAsync(Player p) {
-        // Snapshot mínimo do estado do player na main thread
+        // Snapshot mínimo do estado do "player" na main thread
         Location playerLoc = p.getLocation();
         String playerWorld = playerLoc.getWorld() != null ? playerLoc.getWorld().getName() : null;
         double playerX = playerLoc.getX();
@@ -315,7 +200,7 @@ public class TerrenoService {
         return CompletableFuture.supplyAsync(() -> {
             List<Terreno> terrenos = repository.findAll();
             for (Terreno t : terrenos) {
-                LocationRaw raw = LocationUtils.parsearLocalizacaoRaw(t.getLocation());
+                LocationRaw raw = LocationUtils.converterLocalizacaoRaw(t.getLocation());
                 if (raw == null || raw.worldName() == null) continue;
                 if (!raw.worldName().equals(playerWorld)) continue;
                 int size = t.getSize();
@@ -332,25 +217,6 @@ public class TerrenoService {
         });
     }
 
-
-    public Optional<Location> getSafeTeleportLocation(Long id, String requesterUUID) {
-        Optional<Terreno> terrenoOpt = repository.findById(id);
-        if (terrenoOpt.isEmpty()) return Optional.empty();
-        Terreno terreno = terrenoOpt.get();
-        // Permissões: dono ou admin
-        if (!(terreno.getDonoUUID().equals(requesterUUID) || isAdminDoTerreno(id, requesterUUID))) {
-            return Optional.empty();
-        }
-        Location center = LocationUtils.parsearLocalizacao(terreno.getLocation());
-        if (center == null) return Optional.empty();
-        Location spot = SafeLocationUtils.findSafeSpot(center, terreno.getSize(), config);
-        if (spot != null) return Optional.of(spot);
-        // Single retry with small offset around center
-        Location retryCenter = center.clone().add(2, 0, 2);
-        spot = SafeLocationUtils.findSafeSpot(retryCenter, terreno.getSize(), config);
-        return Optional.ofNullable(spot);
-    }
-
     public Optional<Location> getSafeTeleportLocation(String name, String requesterUUID) throws TerrenoNotFoundException {
         Terreno terreno = buscarTerrenoPorNome(requesterUUID, name);
 
@@ -358,7 +224,7 @@ public class TerrenoService {
             return Optional.empty();
         }
 
-        Location center = LocationUtils.parsearLocalizacao(terreno.getLocation());
+        Location center = LocationUtils.converterLocalizacao(terreno.getLocation());
         if (center == null) return Optional.empty();
         Location spot = SafeLocationUtils.findSafeSpot(center, terreno.getSize(), config);
         if (spot != null) return Optional.of(spot);
@@ -372,19 +238,5 @@ public class TerrenoService {
         if (tOpt.isEmpty()) return false;
         Terreno t = tOpt.get();
         return t.getMembers().stream().anyMatch(m -> playerUUID.equals(m.getMemberUUID()) && m.getMemberRole() != null && m.getMemberRole().name().equalsIgnoreCase("ADMIN"));
-    }
-
-    public boolean isAdminDoTerreno(String name, String playerUUID) throws TerrenoNotFoundException {
-        Terreno t = buscarTerrenoPorNome(playerUUID, name);
-        return t.getMembers().stream().anyMatch(m -> playerUUID.equals(m.getMemberUUID()) && m.getMemberRole() != null && m.getMemberRole().name().equalsIgnoreCase("ADMIN"));
-    }
-
-    private boolean estaDentroDaArea(Location point, Location center, int size) {
-        double half = size / 2.0;
-        if (center.getWorld() == null || point.getWorld() == null) return false;
-        if (!center.getWorld().equals(point.getWorld())) return false;
-        double dx = Math.abs(point.getX() - center.getX());
-        double dz = Math.abs(point.getZ() - center.getZ());
-        return dx <= half && dz <= half;
     }
 }

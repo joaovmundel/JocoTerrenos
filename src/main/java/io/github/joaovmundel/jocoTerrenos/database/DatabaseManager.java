@@ -2,6 +2,7 @@ package io.github.joaovmundel.jocoTerrenos.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.Getter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
@@ -15,6 +16,7 @@ public class DatabaseManager {
     private final Plugin plugin;
     private final FileConfiguration config;
     private HikariDataSource dataSource;
+    @Getter
     private DatabaseType databaseType;
 
     public enum DatabaseType {
@@ -156,57 +158,57 @@ public class DatabaseManager {
             String createTerrenosTable;
             if (databaseType == DatabaseType.SQLITE) {
                 createTerrenosTable = """
-                    CREATE TABLE IF NOT EXISTS terrenos (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        dono_uuid VARCHAR(36) NOT NULL,
-                        name TEXT,
-                        db_name_key TEXT,
-                        location TEXT NOT NULL,
-                        size INTEGER NOT NULL,
-                        pvp BOOLEAN DEFAULT FALSE,
-                        mobs BOOLEAN DEFAULT FALSE,
-                        public_access BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """;
+                            CREATE TABLE IF NOT EXISTS terrenos (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                dono_uuid VARCHAR(36) NOT NULL,
+                                name TEXT,
+                                db_name_key TEXT,
+                                location TEXT NOT NULL,
+                                size INTEGER NOT NULL,
+                                pvp BOOLEAN DEFAULT FALSE,
+                                mobs BOOLEAN DEFAULT FALSE,
+                                public_access BOOLEAN DEFAULT FALSE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            );
+                        """;
                 stmt.execute(createTerrenosTable);
                 stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_name_key ON terrenos(db_name_key)");
             } else if (databaseType == DatabaseType.MYSQL) {
                 createTerrenosTable = """
-                    CREATE TABLE IF NOT EXISTS terrenos (
-                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                        dono_uuid VARCHAR(36) NOT NULL,
-                        name VARCHAR(255),
-                        db_name_key VARCHAR(300),
-                        location TEXT NOT NULL,
-                        size INT NOT NULL,
-                        pvp BOOLEAN DEFAULT FALSE,
-                        mobs BOOLEAN DEFAULT FALSE,
-                        public_access BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                        UNIQUE KEY uk_name_key (db_name_key),
-                        INDEX idx_dono_uuid (dono_uuid)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """;
+                            CREATE TABLE IF NOT EXISTS terrenos (
+                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                dono_uuid VARCHAR(36) NOT NULL,
+                                name VARCHAR(255),
+                                db_name_key VARCHAR(300),
+                                location TEXT NOT NULL,
+                                size INT NOT NULL,
+                                pvp BOOLEAN DEFAULT FALSE,
+                                mobs BOOLEAN DEFAULT FALSE,
+                                public_access BOOLEAN DEFAULT FALSE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                UNIQUE KEY uk_name_key (db_name_key),
+                                INDEX idx_dono_uuid (dono_uuid)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """;
                 stmt.execute(createTerrenosTable);
             } else { // PostgreSQL
                 createTerrenosTable = """
-                    CREATE TABLE IF NOT EXISTS terrenos (
-                        id BIGSERIAL PRIMARY KEY,
-                        dono_uuid VARCHAR(36) NOT NULL,
-                        name VARCHAR(255),
-                        db_name_key VARCHAR(300),
-                        location TEXT NOT NULL,
-                        size INTEGER NOT NULL,
-                        pvp BOOLEAN DEFAULT FALSE,
-                        mobs BOOLEAN DEFAULT FALSE,
-                        public_access BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """;
+                            CREATE TABLE IF NOT EXISTS terrenos (
+                                id BIGSERIAL PRIMARY KEY,
+                                dono_uuid VARCHAR(36) NOT NULL,
+                                name VARCHAR(255),
+                                db_name_key VARCHAR(300),
+                                location TEXT NOT NULL,
+                                size INTEGER NOT NULL,
+                                pvp BOOLEAN DEFAULT FALSE,
+                                mobs BOOLEAN DEFAULT FALSE,
+                                public_access BOOLEAN DEFAULT FALSE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            );
+                        """;
                 stmt.execute(createTerrenosTable);
                 stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS uk_name_key ON terrenos(db_name_key)");
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_dono_uuid ON terrenos(dono_uuid)");
@@ -216,42 +218,42 @@ public class DatabaseManager {
             String createMembersTable;
             if (databaseType == DatabaseType.SQLITE) {
                 createMembersTable = """
-                    CREATE TABLE IF NOT EXISTS terreno_members (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        terreno_id INTEGER NOT NULL,
-                        member_uuid VARCHAR(36) NOT NULL,
-                        member_role VARCHAR(20) NOT NULL,
-                        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE,
-                        UNIQUE(terreno_id, member_uuid)
-                    )
-                """;
+                            CREATE TABLE IF NOT EXISTS terreno_members (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                terreno_id INTEGER NOT NULL,
+                                member_uuid VARCHAR(36) NOT NULL,
+                                member_role VARCHAR(20) NOT NULL,
+                                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE,
+                                UNIQUE(terreno_id, member_uuid)
+                            )
+                        """;
             } else if (databaseType == DatabaseType.MYSQL) {
                 createMembersTable = """
-                    CREATE TABLE IF NOT EXISTS terreno_members (
-                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                        terreno_id BIGINT NOT NULL,
-                        member_uuid VARCHAR(36) NOT NULL,
-                        member_role VARCHAR(20) NOT NULL,
-                        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE,
-                        UNIQUE KEY unique_member (terreno_id, member_uuid),
-                        INDEX idx_member_uuid (member_uuid)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """;
+                            CREATE TABLE IF NOT EXISTS terreno_members (
+                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                terreno_id BIGINT NOT NULL,
+                                member_uuid VARCHAR(36) NOT NULL,
+                                member_role VARCHAR(20) NOT NULL,
+                                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE,
+                                UNIQUE KEY unique_member (terreno_id, member_uuid),
+                                INDEX idx_member_uuid (member_uuid)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """;
             } else { // PostgreSQL
                 createMembersTable = """
-                    CREATE TABLE IF NOT EXISTS terreno_members (
-                        id BIGSERIAL PRIMARY KEY,
-                        terreno_id BIGINT NOT NULL,
-                        member_uuid VARCHAR(36) NOT NULL,
-                        member_role VARCHAR(20) NOT NULL,
-                        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE,
-                        UNIQUE(terreno_id, member_uuid)
-                    );
-                    CREATE INDEX IF NOT EXISTS idx_member_uuid ON terreno_members(member_uuid);
-                """;
+                            CREATE TABLE IF NOT EXISTS terreno_members (
+                                id BIGSERIAL PRIMARY KEY,
+                                terreno_id BIGINT NOT NULL,
+                                member_uuid VARCHAR(36) NOT NULL,
+                                member_role VARCHAR(20) NOT NULL,
+                                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE,
+                                UNIQUE(terreno_id, member_uuid)
+                            );
+                            CREATE INDEX IF NOT EXISTS idx_member_uuid ON terreno_members(member_uuid);
+                        """;
             }
 
             stmt.execute(createMembersTable);
@@ -281,13 +283,6 @@ public class DatabaseManager {
             dataSource.close();
             plugin.getLogger().info("Conexão com o banco de dados fechada com sucesso!");
         }
-    }
-
-    /**
-     * Retorna o tipo de banco de dados configurado
-     */
-    public DatabaseType getDatabaseType() {
-        return databaseType;
     }
 
     /**

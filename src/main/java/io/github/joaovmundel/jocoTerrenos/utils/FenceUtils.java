@@ -9,6 +9,8 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.Map;
+
 public class FenceUtils {
     private static final JocoLogging logger = new JocoLogging("io.github.joaovmundel.jocoTerrenos.utils.FenceUtils.java");
 
@@ -51,7 +53,7 @@ public class FenceUtils {
     }
 
     /**
-     * Redimensiona uma área de cercas, removendo o perímetro antigo e criando um novo.
+     * Redimensiona uma área de cercas, removendo o perímetro antigo e criando outro.
      *
      * @param centerLoc     A localização central da área
      * @param tamanhoAntigo O tamanho antigo do lado da área (ex: 10 para 10x10)
@@ -196,7 +198,7 @@ public class FenceUtils {
     }
 
     /**
-     * Remove uma cerca em uma posição X, Z específica se for uma cerca.
+     * Remove uma cerca numa posição X, Z específica se for uma cerca.
      *
      * @param world O mundo onde a cerca será removida
      * @param x     Coordenada X
@@ -235,7 +237,7 @@ public class FenceUtils {
     }
 
     /**
-     * Coloca uma cerca em uma posição X, Z específica.
+     * Coloca uma cerca numa posição X, Z específica.
      * Busca a superfície adequada para colocar a cerca.
      *
      * @param world O mundo onde a cerca será colocada
@@ -270,7 +272,7 @@ public class FenceUtils {
      * @param world O mundo
      * @param x     Coordenada X
      * @param z     Coordenada Z
-     * @return A coordenada Y da superfície, ou -1 se não encontrar
+     * @return A coordenada Y da superfície, ou --1 se não encontrar
      */
     private static int encontrarSuperficie(World world, int x, int z) {
         int maxY = world.getMaxHeight() - 1;
@@ -342,7 +344,7 @@ public class FenceUtils {
     private static boolean isBlocoSolido(Block block) {
         Material material = block.getType();
 
-        // Verifica se não é ar, água, lava ou outros blocos não-sólidos
+        // Verifica se não é ar, água, lava ou outros blocos não sólidos
         return material.isSolid() &&
                 material != Material.AIR &&
                 material != Material.CAVE_AIR &&
@@ -388,7 +390,7 @@ public class FenceUtils {
                     java.lang.reflect.Method ph = svc.getClass().getMethod("placeholders", Object[].class);
                     Object map = ph.invoke(null, (Object) kv);
                     java.lang.reflect.Method fmt = svc.getClass().getMethod("format", String.class, java.util.Map.class);
-                    return (String) fmt.invoke(svc, key, map);
+                    return (String) fmt.invoke(svc, key, (Map) map);
                 }
             } catch (Throwable ignored) {
             }

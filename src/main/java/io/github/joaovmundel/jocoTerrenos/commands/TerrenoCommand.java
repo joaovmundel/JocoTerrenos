@@ -156,11 +156,11 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             CompletableFuture<Terreno> asyncSearch = terrenoService.getCurrentTerrenoAsync(player);
 
             asyncSearch.thenAccept(terreno -> Bukkit.getScheduler().runTask(plugin, () -> exibirInfo(player, terreno))).exceptionally(
-    ex -> {
-                Bukkit.getScheduler().runTask(plugin, () -> plugin.getMessageService().send(player, "terreno.info.nao-no-terreno"));
-                logger.warning(ex.getMessage());
-                return null;
-            });
+                    ex -> {
+                        Bukkit.getScheduler().runTask(plugin, () -> plugin.getMessageService().send(player, "terreno.info.nao-no-terreno"));
+                        logger.warning(ex.getMessage());
+                        return null;
+                    });
 
             return true;
         }
@@ -202,7 +202,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             Terreno terreno = terrenoService.buscarTerrenoPorNome(playerUUID, name);
 
             if (terrenoService.deletarTerreno(name, playerUUID)) {
-                Location loc = LocationUtils.parsearLocalizacao(terreno.getLocation());
+                Location loc = LocationUtils.converterLocalizacao(terreno.getLocation());
                 if (loc != null) {
                     FenceUtils.removerCercas(loc, terreno.getSize());
                 }
@@ -297,7 +297,6 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 plugin.getMessageService().send(player, "terreno.toggle.erro");
                 logger.warning("Erro ao atualizar configuração do terreno para " + setting);
                 logger.warning("Jogador: " + player.getName() + " - Terreno: " + nome);
-                logger.warning("Sucesso: " + success);
             }
 
         } catch (TerrenoNotFoundException e) {
@@ -362,10 +361,8 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage(plugin.getMessageService().get("help.title"));
-        for (String line : plugin.getMessageService().getList("help.lines")) {
-            player.sendMessage(line);
-        }
+        plugin.getMessageService().send(player, "help.title");
+        plugin.getMessageService().sendList(player, "help.lines");
     }
 
     @Override

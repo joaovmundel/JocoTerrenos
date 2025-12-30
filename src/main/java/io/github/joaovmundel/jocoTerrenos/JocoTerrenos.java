@@ -1,18 +1,20 @@
 package io.github.joaovmundel.jocoTerrenos;
 
 import io.github.joaovmundel.jocoTerrenos.commands.CercarCommand;
-import io.github.joaovmundel.jocoTerrenos.commands.ResizeCercaCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.RemoverCercaCommand;
+import io.github.joaovmundel.jocoTerrenos.commands.ResizeCercaCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.TerrenoCommand;
 import io.github.joaovmundel.jocoTerrenos.database.DatabaseManager;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
+import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import lombok.Getter;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import io.github.joaovmundel.jocoTerrenos.service.MessageService;
+
+import java.util.Objects;
 
 @Getter
 public final class JocoTerrenos extends JavaPlugin {
@@ -44,12 +46,12 @@ public final class JocoTerrenos extends JavaPlugin {
         terrenoService = new TerrenoService(terrenoRepository, getConfig());
 
         // Registra os comandos
-        getCommand("cercar").setExecutor(new CercarCommand(messageService));
-        getCommand("resizecerca").setExecutor(new ResizeCercaCommand(messageService));
-        getCommand("removercerca").setExecutor(new RemoverCercaCommand(messageService));
+        Objects.requireNonNull(getCommand("cercar")).setExecutor(new CercarCommand(messageService));
+        Objects.requireNonNull(getCommand("resizecerca")).setExecutor(new ResizeCercaCommand(messageService));
+        Objects.requireNonNull(getCommand("removercerca")).setExecutor(new RemoverCercaCommand(messageService));
         TerrenoCommand terrenoCmd = new TerrenoCommand(this);
-        getCommand("terreno").setExecutor(terrenoCmd);
-        getCommand("terreno").setTabCompleter(terrenoCmd);
+        Objects.requireNonNull(getCommand("terreno")).setExecutor(terrenoCmd);
+        Objects.requireNonNull(getCommand("terreno")).setTabCompleter(terrenoCmd);
 
         // Setup Vault Economy
         setupEconomy();
@@ -80,11 +82,6 @@ public final class JocoTerrenos extends JavaPlugin {
             return;
         }
         economy = rsp.getProvider();
-        if (economy == null) {
-            getLogger().severe("Economy provider é null! Desabilitando o plugin.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
         getLogger().info("Economy inicializado com sucesso: " + economy.getName());
     }
 }

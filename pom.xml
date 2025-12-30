@@ -103,13 +103,13 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>9.1.0</version>
+            <version>9.3.0</version>
         </dependency>
         <!-- PostgreSQL Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.7</version>
         </dependency>
         <dependency>
             <groupId>com.github.MilkBowl</groupId>

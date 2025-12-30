@@ -7,7 +7,8 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public final class SafeLocationUtils {
-    private SafeLocationUtils() {}
+    private SafeLocationUtils() {
+    }
 
     public static Location findSafeSpot(Location center, int size, FileConfiguration config) {
         if (center == null || center.getWorld() == null || size <= 0) return null;
@@ -36,7 +37,7 @@ public final class SafeLocationUtils {
 
         // Fallbacks
         if (isVoidWorld(world)) {
-            return ensureVoidPad(center, config);
+            return ensureVoidPad(center);
         }
         // Island case: try to find ground below center limited depth
         Location groundBelow = findGroundBelow(world, center.getBlockX(), center.getBlockZ(), minY);
@@ -93,7 +94,7 @@ public final class SafeLocationUtils {
         return "the_end".equalsIgnoreCase(world.getEnvironment().name()) || world.getEnvironment() == World.Environment.THE_END;
     }
 
-    public static Location ensureVoidPad(Location center, FileConfiguration config) {
+    public static Location ensureVoidPad(Location center) {
         World world = center.getWorld();
         if (world == null) return null;
         Material mat = Material.GLASS;
