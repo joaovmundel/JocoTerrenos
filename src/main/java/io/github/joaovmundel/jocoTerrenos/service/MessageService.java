@@ -1,6 +1,8 @@
 package io.github.joaovmundel.jocoTerrenos.service;
 
 import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -110,7 +112,9 @@ public class MessageService {
         String raw = get(key);
         String msg = applyPlaceholders(raw, placeholders);
         if (isJsonMessage(msg) && sender instanceof Player p) {
-            if (!trySendJson(p, stripJsonPrefix(msg))) {
+            String json = stripJsonPrefix(msg);
+            if (!trySendJson(p, json)) {
+                logger.warning("Falha ao enviar JSON, enviando como texto: " + json);
                 sender.sendMessage(msg);
             }
             return;
@@ -135,22 +139,13 @@ public class MessageService {
 
     private boolean trySendJson(Player player, String json) {
         try {
-            Class<?> serializer = Class.forName("net.md_5.bungee.chat.ComponentSerializer");
-            Class<?> baseComponent = Class.forName("net.md_5.bungee.api.chat.BaseComponent");
-            java.lang.reflect.Method parse = serializer.getMethod("parse", String.class);
-            Object comps = parse.invoke(null, json);
-            Object spigot = player.getClass().getMethod("spigot").invoke(player);
-            for (java.lang.reflect.Method m : spigot.getClass().getMethods()) {
-                if (!m.getName().equals("sendMessage")) continue;
-                Class<?>[] params = m.getParameterTypes();
-                if (params.length == 1 && params[0].isArray() && params[0].getComponentType().equals(baseComponent)) {
-                    m.invoke(spigot, comps);
-                    return true;
-                }
-            }
-        } catch (Throwable ignored) {
+            BaseComponent[] components = ComponentSerializer.parse(json);
+            player.spigot().sendMessage(components);
+            return true;
+        } catch (Throwable t) {
+            logger.warning("Erro ao parsear/enviar JSON: " + t.getMessage());
+            return false;
         }
-        return false;
     }
 
     private String applyPlaceholders(String input, Map<String, ?> placeholders) {

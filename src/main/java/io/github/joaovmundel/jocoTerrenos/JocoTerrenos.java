@@ -44,7 +44,6 @@ public final class JocoTerrenos extends JavaPlugin {
 
         // Inicializa os services
         terrenoService = new TerrenoService(terrenoRepository, getConfig(), messageService);
-
         // Registra os comandos
         Objects.requireNonNull(getCommand("cercar")).setExecutor(new CercarCommand(messageService));
         Objects.requireNonNull(getCommand("resizecerca")).setExecutor(new ResizeCercaCommand(messageService));

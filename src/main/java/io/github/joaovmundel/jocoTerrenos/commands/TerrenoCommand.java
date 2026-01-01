@@ -133,7 +133,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             plugin.getMessageService().send(player, "terreno.listar.vazio");
             return true;
         }
-        player.sendMessage(plugin.getMessageService().get("terreno.listar.titulo"));
+        plugin.getMessageService().send(player, "terreno.listar.titulo");
         for (Terreno terreno : terrenos) {
             String pvp = terreno.getPvp() ? plugin.getMessageService().get("status.on") : plugin.getMessageService().get("status.off");
             String mobs = terreno.getMobs() ? plugin.getMessageService().get("status.on") : plugin.getMessageService().get("status.off");
@@ -145,7 +145,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                             "pvp", pvp,
                             "mobs", mobs
                     ));
-            player.sendMessage(line);
+            plugin.getMessageService().send(player, line);
         }
 
         return true;
