@@ -1,26 +1,26 @@
-# Configurações do JocoTerrenos
+# JocoTerrenos Configuration
 
-# Idioma ativo para mensagens (ex.: pt_BR, en_US)
+# Active language for messages (e.g., pt_BR, en_US)
 language: pt_BR
 
-# Configurações de Banco de Dados
+# Database Settings
 database:
-  # Tipo de banco de dados: SQLITE, MYSQL, POSTGRESQL
+  # Database type: SQLITE, MYSQL, POSTGRESQL
   type: SQLITE
 
-  # Configurações para SQLite (usado quando type=SQLITE)
+  # Settings for SQLite (used when type=SQLITE)
   sqlite:
-    # Nome do arquivo do banco de dados (será criado na pasta do plugin)
+    # Database file name (it will be created in the plugin folder)
     filename: terrenos.db
 
-  # Configurações para MySQL (usado quando type=MYSQL)
+  # Settings for MySQL (used when type=MYSQL)
   mysql:
     host: localhost
     port: 3306
     database: jocoterrenos
     username: root
     password: senha
-    # Propriedades adicionais da conexão
+    # Additional connection properties
     properties:
       useSSL: false
       autoReconnect: true
@@ -28,44 +28,44 @@ database:
       prepStmtCacheSize: 250
       prepStmtCacheSqlLimit: 2048
 
-  # Configurações para PostgreSQL (usado quando type=POSTGRESQL)
+  # Settings for PostgreSQL (used when type=POSTGRESQL)
   postgresql:
     host: localhost
     port: 5432
     database: jocoterrenos
     username: postgres
     password: senha
-    # Schema do banco de dados
+    # Database schema
     schema: public
-    # Propriedades adicionais da conexão
+    # Additional connection properties
     properties:
       ssl: false
       autoReconnect: true
 
-  # Configurações do Pool de Conexões (HikariCP)
+  # Connection Pool Settings (HikariCP)
   pool:
-    # Tamanho máximo do pool
+    # Maximum pool size
     maximum-pool-size: 10
-    # Tamanho mínimo de conexões idle
+    # Minimum number of idle connections
     minimum-idle: 2
-    # Tempo máximo de vida de uma conexão (em milissegundos)
+    # Maximum lifetime of a connection (in milliseconds)
     maximum-lifetime: 1800000
-    # Tempo de espera para obter uma conexão (em milissegundos)
+    # Wait time to obtain a connection (in milliseconds)
     connection-timeout: 5000
-    # Tempo máximo que uma conexão pode ficar idle (em milissegundos)
+    # Maximum time a connection can remain idle (in milliseconds)
     idle-timeout: 600000
 
-# Configurações de Terrenos
+# Land Settings
 terrenos:
-  # Tamanho padrão de um terreno (em blocos)
+  # Default land size (in blocks)
   tamanho-padrao: 10
-  # Tamanho máximo permitido
+  # Maximum allowed size
   tamanho-maximo: 100
-  # Tamanho mínimo permitido
+  # Minimum allowed size
   tamanho-minimo: 5
-  # Preço por bloco para compra de terreno
+  # Price per block for land purchase
   block-price: 1000.0
-  # Material das cercas colocadas (ex.: OAK_FENCE, SPRUCE_FENCE, NETHER_BRICK_FENCE)
+  # Material for placed fences (e.g., OAK_FENCE, SPRUCE_FENCE, NETHER_BRICK_FENCE)
   fence-material: OAK_FENCE
   teleport:
     altura-min: 0
