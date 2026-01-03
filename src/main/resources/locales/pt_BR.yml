@@ -10,7 +10,7 @@ invalid-size: '&cO tamanho deve ser maior que zero!'
 invalid-location: '&cLocalização inválida!'
 
 # Ajuda
-help.title: '&a&l=== Comandos de Terreno ==='
+help.title: '&6&lJocoTerrenos &7- Ajuda'
 help.lines:
   - '&7/terreno comprar [tamanho] [nome] &f- Compra um terreno'
   - '&7/terreno preco [tamanho] &f- Mostra o preço de um terreno NxN'
@@ -50,6 +50,7 @@ terreno.comprar.info-dono: '&7Dono: &f{player}'
 terreno.comprar.info-terreno: '&7Terreno: &f{name}'
 terreno.comprar.info-tamanho: '&7Tamanho: {size}x{size}'
 terreno.comprar.falha: '&cNão foi possível comprar o terreno. Verifique saldo, nome único e parâmetros.'
+terreno.comprar.area-indisponivel: '&cÁrea indisponível! O terreno precisa estar a pelo menos {buffer} blocos de distância de outros terrenos.'
 
 # Terreno listar
 terreno.listar.vazio: '&eVocê não possui terrenos.'

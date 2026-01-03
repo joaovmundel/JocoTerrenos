@@ -50,6 +50,7 @@ terreno.comprar.info-dono: '&7Owner: &f{player}'
 terreno.comprar.info-terreno: '&7Land: &f{name}'
 terreno.comprar.info-tamanho: '&7Size: {size}x{size}'
 terreno.comprar.falha: '&cCould not purchase land. Check balance, unique name and parameters.'
+terreno.comprar.area-indisponivel: '&cArea unavailable! The land must be at least {buffer} blocks away from other lands.'
 
 # Land list
 terreno.listar.vazio: '&eYou do not own any lands.'

@@ -92,22 +92,41 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            double custo = terrenoService.calcularCustoTerreno(tamanho);
-            plugin.getMessageService().send(player, "terreno.comprar.preco", MessageService.placeholders("price", String.format("%.2f", custo)));
+            // Verificação assíncrona de disponibilidade com espaçamento, snapshot da localização na main thread dentro do service
+            int buffer = terrenoService.getEspacoEntreTerrenos();
+            CompletableFuture<Boolean> dispFut = terrenoService.isAreaDisponivelAsync(player.getLocation(), tamanho, buffer);
+            dispFut.handle((disponivel, ex) -> {
+                if (ex != null) {
+                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getMessageService().send(player, "terreno.comprar.falha"));
+                    logger.warning("Erro ao verificar disponibilidade: " + ex.getMessage());
+                    return null;
+                }
+                if (Boolean.FALSE.equals(disponivel)) {
+                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getMessageService().send(player, "terreno.comprar.area-indisponivel", MessageService.placeholders("buffer", buffer)));
+                    return null;
+                }
 
-            Optional<Terreno> created = terrenoService.criarTerreno(player, tamanho, nome);
+                // Área disponível: prossegue criação na main thread
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    double custo = terrenoService.calcularCustoTerreno(tamanho);
+                    plugin.getMessageService().send(player, "terreno.comprar.preco", MessageService.placeholders("price", String.format("%.2f", custo)));
 
-            if (created.isPresent()) {
-                FenceUtils.colocarCercas(player, tamanho);
-                Terreno terreno = created.get();
-                plugin.getMessageService().send(player, "terreno.comprar.sucesso");
-                plugin.getMessageService().send(player, "terreno.comprar.info-dono", MessageService.placeholders("player", player.getName()));
-                plugin.getMessageService().send(player, "terreno.comprar.info-terreno", MessageService.placeholders("name", terreno.getName()));
-                plugin.getMessageService().send(player, "terreno.comprar.info-tamanho", MessageService.placeholders("size", tamanho));
-            } else {
-                plugin.getMessageService().send(player, "terreno.comprar.falha");
-                return false;
-            }
+                    Optional<Terreno> created = terrenoService.criarTerreno(player, tamanho, nome);
+
+                    if (created.isPresent()) {
+                        FenceUtils.colocarCercas(player, tamanho);
+                        Terreno terreno = created.get();
+                        plugin.getMessageService().send(player, "terreno.comprar.sucesso");
+                        plugin.getMessageService().send(player, "terreno.comprar.info-dono", MessageService.placeholders("player", player.getName()));
+                        plugin.getMessageService().send(player, "terreno.comprar.info-terreno", MessageService.placeholders("name", terreno.getName()));
+                        plugin.getMessageService().send(player, "terreno.comprar.info-tamanho", MessageService.placeholders("size", tamanho));
+                    } else {
+                        plugin.getMessageService().send(player, "terreno.comprar.falha");
+                    }
+                });
+                return null;
+            });
+
         } catch (NumberFormatException e) {
             plugin.getMessageService().send(player, "invalid-number");
             return false;
@@ -407,6 +426,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
+
         return suggestions;
     }
 }

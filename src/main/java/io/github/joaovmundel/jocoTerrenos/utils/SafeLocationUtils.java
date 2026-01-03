@@ -14,8 +14,8 @@ public final class SafeLocationUtils {
         if (center == null || center.getWorld() == null || size <= 0) return null;
         World world = center.getWorld();
         int half = size / 2;
-        int minY = config.getInt("terrenos.teleport.altura-min", world.getMinHeight());
-        int maxY = config.getInt("terrenos.teleport.altura-max", world.getMaxHeight());
+        int minY = config.getInt("lands.teleport.min-y", config.getInt("terrenos.teleport.altura-min", world.getMinHeight()));
+        int maxY = config.getInt("lands.teleport.max-y", config.getInt("terrenos.teleport.altura-max", world.getMaxHeight()));
 
         // Try center first
         Location candidate = surfaceAt(world, center.getBlockX(), center.getBlockZ(), minY, maxY);

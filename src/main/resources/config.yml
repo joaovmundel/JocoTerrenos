@@ -56,21 +56,23 @@ database:
     idle-timeout: 600000
 
 # Land Settings
-terrenos:
+lands:
   # Default land size (in blocks)
-  tamanho-padrao: 10
+  default-size: 10
   # Maximum allowed size
-  tamanho-maximo: 100
+  max-size: 100
   # Minimum allowed size
-  tamanho-minimo: 5
+  min-size: 5
+  # Minimum spacing between lands (in blocks)
+  spacing-between-lands: 3
   # Price per block for land purchase
   block-price: 1000.0
   # Material for placed fences (e.g., OAK_FENCE, SPRUCE_FENCE, NETHER_BRICK_FENCE)
   fence-material: OAK_FENCE
   teleport:
-    altura-min: 0
-    altura-max: 320
-    busca:
+    min-y: 0
+    max-y: 320
+    search:
       max-depth: 64
     void:
       platform:

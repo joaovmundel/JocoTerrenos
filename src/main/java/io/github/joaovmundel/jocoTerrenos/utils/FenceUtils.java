@@ -354,7 +354,7 @@ public class FenceUtils {
     private static Material getConfiguredFenceMaterial() {
         Plugin plugin = Bukkit.getPluginManager().getPlugin("JocoTerrenos");
         if (plugin == null) return Material.OAK_FENCE;
-        String matName = plugin.getConfig().getString("terrenos.fence-material", "OAK_FENCE");
+        String matName = plugin.getConfig().getString("lands.fence-material", plugin.getConfig().getString("terrenos.fence-material", "OAK_FENCE"));
         try {
             return Material.valueOf(matName.toUpperCase());
         } catch (IllegalArgumentException ex) {

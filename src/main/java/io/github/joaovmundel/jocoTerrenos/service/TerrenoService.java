@@ -53,6 +53,13 @@ public class TerrenoService {
         if (repository.existsByOwnerAndNameIgnoreCase(donoUUID, nomeTrim)) {
             return Optional.empty();
         }
+        // Centro proposto do terreno
+        Location loc = player.getLocation();
+        // Verifica disponibilidade da área com espaçamento mínimo
+        int buffer = getEspacoEntreTerrenos();
+        if (!isAreaDisponivel(loc, tamanho, buffer)) {
+            return Optional.empty();
+        }
         // Calcula custo e verifica saldo
         double custo = calcularCustoTerreno(tamanho);
         Economy economy = ((io.github.joaovmundel.jocoTerrenos.JocoTerrenos) Objects.requireNonNull(Bukkit.getPluginManager().getPlugin("JocoTerrenos"))).getEconomy();
@@ -67,7 +74,6 @@ public class TerrenoService {
             return Optional.empty();
         }
         // Cria terreno
-        Location loc = player.getLocation();
         String location = LocationUtils.formatarLocalizacao(loc);
         Terreno terreno = new Terreno();
         terreno.setDonoUUID(donoUUID);
@@ -92,7 +98,7 @@ public class TerrenoService {
     }
 
     public double calcularCustoTerreno(int tamanho) {
-        double blockPrice = config.getDouble("terrenos.block-price", 1000.0);
+        double blockPrice = config.getDouble("lands.block-price", config.getDouble("terrenos.block-price", 1000.0));
         return (double) tamanho * (double) tamanho * blockPrice;
     }
 
@@ -159,16 +165,94 @@ public class TerrenoService {
      * Obtém o tamanho mínimo configurado
      */
     public int getTamanhoMinimo() {
-        return config.getInt("terrenos.tamanho-minimo", 5);
+        return config.getInt("lands.min-size", config.getInt("terrenos.tamanho-minimo", 5));
     }
 
     /**
      * Obtém o tamanho máximo configurado
      */
     public int getTamanhoMaximo() {
-        return config.getInt("terrenos.tamanho-maximo", 100);
+        return config.getInt("lands.max-size", config.getInt("terrenos.tamanho-maximo", 100));
     }
 
+    /**
+     * Distância (em blocos) mínima entre terrenos diferentes.
+     */
+    public int getEspacoEntreTerrenos() {
+        return config.getInt("lands.spacing-between-lands", config.getInt("terrenos.espaco-entre-terrenos", 3));
+    }
+
+    /**
+     * Verifica se a área proposta está livre considerando um espaçamento mínimo entre terrenos.
+     */
+    public boolean isAreaDisponivel(Location center, int tamanho, int buffer) {
+        if (center == null || center.getWorld() == null) return false;
+        String world = center.getWorld().getName();
+        double half = tamanho / 2.0;
+        double minX = center.getX() - half;
+        double maxX = center.getX() + half;
+        double minZ = center.getZ() - half;
+        double maxZ = center.getZ() + half;
+
+        List<Terreno> existentes = repository.findAll();
+        for (Terreno t : existentes) {
+            LocationRaw raw = LocationUtils.converterLocalizacaoRaw(t.getLocation());
+            if (raw == null || raw.worldName() == null) continue;
+            if (!world.equals(raw.worldName())) continue;
+            int size2 = t.getSize();
+            double half2 = size2 / 2.0;
+            double minX2 = raw.x() - half2;
+            double maxX2 = raw.x() + half2;
+            double minZ2 = raw.z() - half2;
+            double maxZ2 = raw.z() + half2;
+            // Checagem de colisão com "buffer" estrito (permite exatamente ‘buffer’ de distância)
+            boolean overlapX = (maxX + buffer > minX2) && (minX - buffer < maxX2);
+            boolean overlapZ = (maxZ + buffer > minZ2) && (minZ - buffer < maxZ2);
+            if (overlapX && overlapZ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Versão assíncrona para verificar disponibilidade de área sem bloquear a main thread.
+     * Faz snapshot mínimo do estado necessário (mundo, x, z) e processa o restante fora da thread do servidor.
+     */
+    public CompletableFuture<Boolean> isAreaDisponivelAsync(Location center, int tamanho, int buffer) {
+        if (center == null || center.getWorld() == null) {
+            return CompletableFuture.completedFuture(false);
+        }
+        final String world = center.getWorld().getName();
+        final double cx = center.getX();
+        final double cz = center.getZ();
+        return CompletableFuture.supplyAsync(() -> {
+            double half = tamanho / 2.0;
+            double minX = cx - half;
+            double maxX = cx + half;
+            double minZ = cz - half;
+            double maxZ = cz + half;
+
+            List<Terreno> existentes = repository.findAll();
+            for (Terreno t : existentes) {
+                LocationRaw raw = LocationUtils.converterLocalizacaoRaw(t.getLocation());
+                if (raw == null || raw.worldName() == null) continue;
+                if (!world.equals(raw.worldName())) continue;
+                int size2 = t.getSize();
+                double half2 = size2 / 2.0;
+                double minX2 = raw.x() - half2;
+                double maxX2 = raw.x() + half2;
+                double minZ2 = raw.z() - half2;
+                double maxZ2 = raw.z() + half2;
+                boolean overlapX = (maxX + buffer > minX2) && (minX - buffer < maxX2);
+                boolean overlapZ = (maxZ + buffer > minZ2) && (minZ - buffer < maxZ2);
+                if (overlapX && overlapZ) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
 
     private boolean toggleConfiguracao(String nome, String playerUUID, String tipo) throws TerrenoNotFoundException {
         Terreno t = buscarTerrenoPorNome(playerUUID, nome);
