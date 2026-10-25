@@ -5,6 +5,7 @@ import io.github.joaovmundel.jocoTerrenos.models.TerrenoMember;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoRole;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils.LocationRaw;
+import io.github.joaovmundel.jocoTerrenos.utils.PlayerKeys;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +23,7 @@ public final class ClaimMapper {
      * decides how loudly to complain)
      */
     public static Claim toClaim(Terreno terreno) {
-        if (terreno.getId() == null || terreno.getDonoUUID() == null || terreno.getSize() == null || terreno.getSize() <= 0) {
+        if (terreno.getId() == null || terreno.getDonoNome() == null || terreno.getSize() == null || terreno.getSize() <= 0) {
             return null;
         }
         LocationRaw center = LocationUtils.converterLocalizacaoRaw(terreno.getLocation());
@@ -32,7 +33,7 @@ public final class ClaimMapper {
         Bounds bounds = Bounds.centeredOn((int) Math.floor(center.x()), (int) Math.floor(center.z()), terreno.getSize());
         return new Claim(
                 terreno.getId(),
-                terreno.getDonoUUID(),
+                PlayerKeys.of(terreno.getDonoNome()),
                 center.worldName(),
                 bounds,
                 Boolean.TRUE.equals(terreno.getPvp()),
@@ -44,8 +45,8 @@ public final class ClaimMapper {
     private static Map<String, TerrenoRole> membersOf(Terreno terreno) {
         Map<String, TerrenoRole> members = new HashMap<String, TerrenoRole>();
         for (TerrenoMember member : terreno.getMembers()) {
-            if (member.getMemberUUID() != null && member.getMemberRole() != null) {
-                members.put(member.getMemberUUID(), member.getMemberRole());
+            if (member.getMemberNome() != null && member.getMemberRole() != null) {
+                members.put(PlayerKeys.of(member.getMemberNome()), member.getMemberRole());
             }
         }
         return members;

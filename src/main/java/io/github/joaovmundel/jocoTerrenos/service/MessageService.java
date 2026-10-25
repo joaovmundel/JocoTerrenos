@@ -1,49 +1,47 @@
 package io.github.joaovmundel.jocoTerrenos.service;
 
 import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Player messages from {@code locales/<language>.yml}. Bukkit 1.5.2 reads YAML in the platform charset, so the
+ * files are decoded as UTF-8 here. Missing keys fall back to the default language, then to the copy bundled in
+ * the jar (for locale files saved by an older version).
+ */
 public class MessageService {
-    private final JavaPlugin plugin;
-    private YamlConfiguration active;
-    private YamlConfiguration fallback;
-    /** Texts shipped inside the jar: covers keys added by an update to locale files already saved on disk. */
-    private YamlConfiguration bundled = new YamlConfiguration();
-
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String DEFAULT_LANG = "pt_BR";
     private static final JocoLogging logger = new JocoLogging(MessageService.class.getName());
+
+    private final JavaPlugin plugin;
+    private YamlConfiguration active = new YamlConfiguration();
+    private YamlConfiguration fallback = new YamlConfiguration();
+    private YamlConfiguration bundled = new YamlConfiguration();
 
     public MessageService(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
     public void initLocalesFolderAndDefaults() {
-        File dataFolder = plugin.getDataFolder();
-        boolean createDataFolder = false, createLocalesFolder = false;
-        if (!dataFolder.exists()) {
-            createDataFolder = dataFolder.mkdirs();
-        }
-        File locales = new File(dataFolder, "locales");
-        if (!locales.exists()) {
-            createLocalesFolder = locales.mkdirs();
-        }
-
-        if (!createDataFolder || !createLocalesFolder) {
+        File locales = new File(plugin.getDataFolder(), "locales");
+        if (!locales.exists() && !locales.mkdirs()) {
             logger.warning("Could not create locales folder inside plugin data folder.");
         }
         saveResourceIfMissing("locales/pt_BR.yml");
@@ -59,45 +57,71 @@ public class MessageService {
 
     public void reload() {
         String lang = plugin.getConfig().getString("language", DEFAULT_LANG);
-        this.active = loadLocale(lang);
-        this.fallback = loadLocale(DEFAULT_LANG);
-        if (this.fallback == null) {
-            this.fallback = new YamlConfiguration();
-        }
-        if (this.active == null) {
-            this.active = this.fallback;
-        }
-        YamlConfiguration shipped = loadBundledLocale(DEFAULT_LANG);
-        this.bundled = shipped != null ? shipped : new YamlConfiguration();
+        this.bundled = orEmpty(loadBundledLocale(DEFAULT_LANG));
+        this.fallback = orEmpty(loadLocaleFile(DEFAULT_LANG));
+        YamlConfiguration selected = loadLocaleFile(lang);
+        this.active = selected != null ? selected : this.fallback;
     }
 
-    private YamlConfiguration loadBundledLocale(String code) {
-        try (InputStream in = plugin.getResource("locales/" + code + ".yml")) {
-            if (in == null) {
-                return null;
-            }
-            return YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
-        } catch (java.io.IOException e) {
-            logger.warning("Não foi possível ler os textos embutidos de " + code + ": " + e.getMessage());
+    private static YamlConfiguration orEmpty(YamlConfiguration yaml) {
+        return yaml != null ? yaml : new YamlConfiguration();
+    }
+
+    private YamlConfiguration loadLocaleFile(String code) {
+        File file = new File(plugin.getDataFolder(), "locales/" + code + ".yml");
+        if (!file.exists()) {
+            return loadBundledLocale(code);
+        }
+        try {
+            return parse(Files.readAllBytes(file.toPath()), file.getName());
+        } catch (IOException e) {
+            logger.warning("Não foi possível ler " + file.getName() + ": " + e.getMessage());
             return null;
         }
     }
 
-    private YamlConfiguration loadLocale(String code) {
-        try {
-            File file = new File(plugin.getDataFolder(), "locales/" + code + ".yml");
-            if (file.exists()) {
-                return YamlConfiguration.loadConfiguration(file);
-            }
-            InputStream in = plugin.getResource("locales/" + code + ".yml");
-            if (in != null) {
-                YamlConfiguration yml = YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
-                in.close();
-                return yml;
-            }
-        } catch (Exception ignored) {
+    private YamlConfiguration loadBundledLocale(String code) {
+        InputStream in = plugin.getResource("locales/" + code + ".yml");
+        if (in == null) {
+            return null;
         }
-        return null;
+        try {
+            return parse(readAll(in), code + ".yml (embutido)");
+        } catch (IOException e) {
+            logger.warning("Não foi possível ler os textos embutidos de " + code + ": " + e.getMessage());
+            return null;
+        } finally {
+            closeQuietly(in);
+        }
+    }
+
+    private static YamlConfiguration parse(byte[] content, String name) {
+        YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.loadFromString(new String(content, UTF_8));
+        } catch (InvalidConfigurationException e) {
+            logger.warning("YAML inválido em " + name + ": " + e.getMessage());
+            return null;
+        }
+        return yaml;
+    }
+
+    private static byte[] readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
+    }
+
+    private static void closeQuietly(InputStream in) {
+        try {
+            in.close();
+        } catch (IOException e) {
+            logger.warning("Erro ao fechar um recurso embutido (ignorado): " + e.getMessage());
+        }
     }
 
     public String get(String key) {
@@ -116,7 +140,11 @@ public class MessageService {
         if (list.isEmpty()) {
             list = bundled.getStringList(key);
         }
-        return list.stream().map(this::colorize).toList();
+        List<String> colored = new ArrayList<String>(list.size());
+        for (String line : list) {
+            colored.add(colorize(line));
+        }
+        return colored;
     }
 
     public String format(String key, Map<String, ?> placeholders) {
@@ -125,46 +153,16 @@ public class MessageService {
     }
 
     public void send(CommandSender sender, String key) {
-        send(sender, key, Collections.emptyMap());
+        send(sender, key, Collections.<String, Object>emptyMap());
     }
 
     public void send(CommandSender sender, String key, Map<String, ?> placeholders) {
-        String raw = get(key);
-        String msg = applyPlaceholders(raw, placeholders);
-        if (isJsonMessage(msg) && sender instanceof Player p) {
-            String json = stripJsonPrefix(msg);
-            if (!trySendJson(p, json)) {
-                logger.warning("Falha ao enviar JSON, enviando como texto: " + json);
-                sender.sendMessage(msg);
-            }
-            return;
-        }
-        sender.sendMessage(msg);
+        sender.sendMessage(applyPlaceholders(get(key), placeholders));
     }
 
     public void sendList(CommandSender sender, String key) {
         for (String line : getList(key)) {
             sender.sendMessage(line);
-        }
-    }
-
-    private boolean isJsonMessage(String msg) {
-        String s = msg.trim();
-        return s.startsWith("json:");
-    }
-
-    private String stripJsonPrefix(String msg) {
-        return msg.trim().substring("json:".length()).trim();
-    }
-
-    private boolean trySendJson(Player player, String json) {
-        try {
-            BaseComponent[] components = ComponentSerializer.parse(json);
-            player.spigot().sendMessage(components);
-            return true;
-        } catch (Throwable t) {
-            logger.warning("Erro ao parsear/enviar JSON: " + t.getMessage());
-            return false;
         }
     }
 
@@ -185,7 +183,7 @@ public class MessageService {
 
     public static Map<String, Object> placeholders(Object... kv) {
         if (kv == null || kv.length == 0) return Collections.emptyMap();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<String, Object>();
         for (int i = 0; i + 1 < kv.length; i += 2) {
             map.put(String.valueOf(kv[i]), kv[i + 1]);
         }

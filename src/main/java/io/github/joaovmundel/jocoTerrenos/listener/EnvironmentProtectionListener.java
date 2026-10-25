@@ -2,6 +2,7 @@ package io.github.joaovmundel.jocoTerrenos.listener;
 
 import io.github.joaovmundel.jocoTerrenos.protection.Claim;
 import io.github.joaovmundel.jocoTerrenos.service.ProtectionService;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -9,7 +10,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
@@ -35,12 +35,12 @@ public final class EnvironmentProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
-        removeClaimed(event.blockList());
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onBlockExplode(BlockExplodeEvent event) {
-        removeClaimed(event.blockList());
+        Iterator<Block> iterator = event.blockList().iterator();
+        while (iterator.hasNext()) {
+            if (protection.claimAt(iterator.next()) != null) {
+                iterator.remove();
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -82,7 +82,8 @@ public final class EnvironmentProtectionListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         BlockFace direction = event.getDirection();
-        for (Block moved : event.getBlocks()) {
+        List<Block> pushed = event.getBlocks();
+        for (Block moved : pushed) {
             if (crossesLandBorder(moved, moved.getRelative(direction))) {
                 event.setCancelled(true);
                 return;
@@ -94,42 +95,27 @@ public final class EnvironmentProtectionListener implements Listener {
         }
     }
 
+    /**
+     * A sticky piston pulls the block two steps from it into the spot next to it. 1.5.2 only reports the
+     * block being pulled, so the destination is worked out from the geometry instead of trusting
+     * {@code getDirection()}.
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPistonRetract(BlockPistonRetractEvent event) {
-        List<Block> blocks = event.getBlocks();
-        if (blocks.isEmpty()) {
+        if (!event.isSticky()) {
             return;
         }
-        BlockFace pull = pullDirection(event.getBlock(), blocks.get(0), event.getDirection());
-        for (Block moved : blocks) {
-            if (crossesLandBorder(moved, moved.getRelative(pull))) {
-                event.setCancelled(true);
-                return;
-            }
+        Block piston = event.getBlock();
+        Block pulled = event.getRetractLocation().getBlock();
+        if (pulled.getType() == Material.AIR) {
+            return;
         }
-    }
-
-    /**
-     * Pulled blocks move toward the piston. Whether {@code getDirection()} is the face the piston looks at or
-     * the way the blocks travel is not something to rely on, so pick the face of that axis that brings the
-     * block closer to the piston.
-     */
-    private static BlockFace pullDirection(Block piston, Block pulled, BlockFace axis) {
-        int current = manhattanDistance(piston, pulled);
-        int along = manhattanDistance(piston, pulled.getRelative(axis));
-        return along < current ? axis : axis.getOppositeFace();
-    }
-
-    private static int manhattanDistance(Block a, Block b) {
-        return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY()) + Math.abs(a.getZ() - b.getZ());
-    }
-
-    private void removeClaimed(List<Block> blocks) {
-        Iterator<Block> iterator = blocks.iterator();
-        while (iterator.hasNext()) {
-            if (protection.claimAt(iterator.next()) != null) {
-                iterator.remove();
-            }
+        Block destination = piston.getRelative(
+                Integer.signum(pulled.getX() - piston.getX()),
+                Integer.signum(pulled.getY() - piston.getY()),
+                Integer.signum(pulled.getZ() - piston.getZ()));
+        if (crossesLandBorder(pulled, destination)) {
+            event.setCancelled(true);
         }
     }
 

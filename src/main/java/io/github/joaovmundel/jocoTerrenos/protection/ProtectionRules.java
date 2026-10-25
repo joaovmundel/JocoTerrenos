@@ -5,55 +5,43 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Name based classification of materials and spawn reasons. Working on names instead of Bukkit enums keeps
- * the rules unit testable without a server, and a name that does not exist in some game version is harmless.
+ * Name based classification of materials and spawn reasons, using the Material names of Minecraft 1.5.2.
+ * Working on names instead of Bukkit enums keeps the rules unit testable without a server.
  */
 public final class ProtectionRules {
 
-    private static final String[] USABLE_SUFFIXES = {"_DOOR", "_TRAPDOOR", "_FENCE_GATE", "_BUTTON", "_PRESSURE_PLATE"};
-    private static final String LEVER = "LEVER";
+    /** Blocks a visitor may operate on a public land: doors, trapdoors, gates, buttons, levers and plates. */
+    private static final Set<String> USABLE_BLOCKS = new HashSet<String>(Arrays.asList(
+            "WOODEN_DOOR", "IRON_DOOR_BLOCK", "TRAP_DOOR", "FENCE_GATE", "LEVER", "STONE_BUTTON", "WOOD_BUTTON",
+            "STONE_PLATE", "WOOD_PLATE", "GOLD_PLATE", "IRON_PLATE", "TRIPWIRE", "TRIPWIRE_HOOK"));
 
-    private static final String[] RESTRICTED_ITEM_SUFFIXES = {
-            "_BUCKET", "_SPAWN_EGG", "_BOAT", "_RAFT", "_MINECART", "_HOE", "_SHOVEL", "_AXE"};
+    /** Items whose right click acts on the world beyond the clicked block (liquids, fire, entities, tools). */
     private static final Set<String> RESTRICTED_ITEMS = new HashSet<String>(Arrays.asList(
-            "FLINT_AND_STEEL", "FIRE_CHARGE", "ARMOR_STAND", "ITEM_FRAME", "GLOW_ITEM_FRAME", "PAINTING",
-            "END_CRYSTAL", "MINECART", "BONE_MEAL", "HONEYCOMB", "SHEARS", "LEAD"));
+            "BUCKET", "WATER_BUCKET", "LAVA_BUCKET", "FLINT_AND_STEEL", "FIREBALL", "MONSTER_EGG", "BOAT",
+            "MINECART", "STORAGE_MINECART", "POWERED_MINECART", "EXPLOSIVE_MINECART", "HOPPER_MINECART",
+            "WOOD_HOE", "STONE_HOE", "IRON_HOE", "GOLD_HOE", "DIAMOND_HOE",
+            "INK_SACK", "PAINTING", "ITEM_FRAME", "EYE_OF_ENDER", "SHEARS"));
 
     /** Spawns that come from the world itself; spawn eggs, commands and golem/wither building are not here. */
     private static final Set<String> BLOCKED_SPAWN_REASONS = new HashSet<String>(Arrays.asList(
-            "NATURAL", "CHUNK_GEN", "JOCKEY", "REINFORCEMENTS", "VILLAGE_INVASION", "RAID", "PATROL",
-            "LIGHTNING", "NETHER_PORTAL", "TRAP", "SPAWNER", "DEFAULT"));
+            "NATURAL", "CHUNK_GEN", "JOCKEY", "VILLAGE_INVASION", "LIGHTNING", "SPAWNER", "DEFAULT"));
 
     private ProtectionRules() {
     }
 
     /**
-     * Blocks a visitor may operate on a public land: doors, trapdoors, gates, buttons, levers and plates.
-     * Everything else (containers, crafting, beds, redstone components...) needs build access.
+     * Everything that is not listed (containers, crafting, beds, redstone components...) needs build access.
      */
     public static boolean isUsableBlock(String materialName) {
-        if (LEVER.equals(materialName)) {
-            return true;
-        }
-        return endsWithAny(materialName, USABLE_SUFFIXES);
+        return USABLE_BLOCKS.contains(materialName);
     }
 
-    /** Items whose right click acts on the world beyond the clicked block (liquids, fire, entities, tools). */
     public static boolean isRestrictedItem(String materialName) {
-        return RESTRICTED_ITEMS.contains(materialName) || endsWithAny(materialName, RESTRICTED_ITEM_SUFFIXES);
+        return RESTRICTED_ITEMS.contains(materialName);
     }
 
     /** Whether a hostile mob spawning for this reason must be stopped on a land with mobs disabled. */
     public static boolean isBlockedSpawnReason(String reasonName) {
         return BLOCKED_SPAWN_REASONS.contains(reasonName);
-    }
-
-    private static boolean endsWithAny(String value, String[] suffixes) {
-        for (String suffix : suffixes) {
-            if (value.endsWith(suffix)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

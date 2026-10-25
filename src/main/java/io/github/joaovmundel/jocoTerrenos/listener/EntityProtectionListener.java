@@ -3,11 +3,13 @@ package io.github.joaovmundel.jocoTerrenos.listener;
 import io.github.joaovmundel.jocoTerrenos.protection.Claim;
 import io.github.joaovmundel.jocoTerrenos.protection.ProtectionRules;
 import io.github.joaovmundel.jocoTerrenos.service.ProtectionService;
-import org.bukkit.entity.Enemy;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.FallingBlock;
+import org.bukkit.entity.Ghast;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Slime;
 import org.bukkit.entity.Tameable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -16,13 +18,11 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
-import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.projectiles.ProjectileSource;
 
 /**
- * Applies the PvP and mobs flags and keeps non-hostile entities (animals, villagers, item frames, armor
- * stands) safe from players who cannot build on the land.
+ * Applies the PvP and mobs flags and keeps non-hostile entities (animals, villagers, item frames, paintings)
+ * safe from players who cannot build on the land.
  */
 public final class EntityProtectionListener implements Listener {
 
@@ -68,17 +68,10 @@ public final class EntityProtectionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onArmorStandManipulate(PlayerArmorStandManipulateEvent event) {
-        if (protection.denyBuild(event.getPlayer(), event.getRightClicked().getLocation())) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onHangingBreak(HangingBreakByEntityEvent event) {
         Player remover = playerBehind(event.getRemover());
         if (remover == null) {
-            // creepers, skeleton arrows, dispensers and the like never get to break frames and paintings on a land
+            // creepers, skeleton arrows and the like never get to break frames and paintings on a land
             if (protection.claimAt(event.getEntity().getLocation()) != null) {
                 event.setCancelled(true);
             }
@@ -122,13 +115,13 @@ public final class EntityProtectionListener implements Listener {
         return (atVictim != null && !atVictim.isPvp()) || (atAttacker != null && !atAttacker.isPvp());
     }
 
-    /** The player who dealt the damage, directly or through an arrow, trident, potion... */
+    /** The player who dealt the damage, directly or through an arrow, snowball... */
     private static Player playerBehind(Entity damager) {
         if (damager instanceof Player) {
             return (Player) damager;
         }
         if (damager instanceof Projectile) {
-            ProjectileSource shooter = ((Projectile) damager).getShooter();
+            Entity shooter = ((Projectile) damager).getShooter();
             if (shooter instanceof Player) {
                 return (Player) shooter;
             }
@@ -136,8 +129,9 @@ public final class EntityProtectionListener implements Listener {
         return null;
     }
 
+    /** 1.5.2 has no Enemy interface: monsters, slimes (and magma cubes) and ghasts. */
     private static boolean isHostile(Entity entity) {
-        return entity instanceof Enemy;
+        return entity instanceof Monster || entity instanceof Slime || entity instanceof Ghast;
     }
 
     private static boolean isOwnPet(Player player, Entity entity) {

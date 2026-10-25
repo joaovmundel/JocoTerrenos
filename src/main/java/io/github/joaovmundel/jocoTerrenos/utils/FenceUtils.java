@@ -14,6 +14,9 @@ import java.util.Map;
 public class FenceUtils {
     private static final JocoLogging logger = new JocoLogging("io.github.joaovmundel.jocoTerrenos.utils.FenceUtils.java");
 
+    /** Minecraft 1.5.2 worlds start at y=0 (World has no getMinHeight). */
+    private static final int MIN_HEIGHT = 0;
+
     private FenceUtils() {
     }
 
@@ -212,7 +215,7 @@ public class FenceUtils {
         }
         int removed = 0;
         int maxY = world.getMaxHeight() - 1;
-        int minY = world.getMinHeight();
+        int minY = MIN_HEIGHT;
         Material fenceMat = getConfiguredFenceMaterial();
         Block atSurface = world.getBlockAt(x, y, z);
         if (atSurface.getType() == fenceMat) {
@@ -276,7 +279,7 @@ public class FenceUtils {
      */
     private static int encontrarSuperficie(World world, int x, int z) {
         int maxY = world.getMaxHeight() - 1;
-        int minY = world.getMinHeight();
+        int minY = MIN_HEIGHT;
 
         // Começa do topo e desce até encontrar um bloco sólido
         for (int y = maxY; y > minY; y--) {
@@ -345,20 +348,17 @@ public class FenceUtils {
         Material material = block.getType();
 
         // Verifica se não é ar, água, lava ou outros blocos não sólidos
-        return material.isSolid() &&
-                material != Material.AIR &&
-                material != Material.CAVE_AIR &&
-                material != Material.VOID_AIR;
+        return material.isSolid() && material != Material.AIR;
     }
 
     private static Material getConfiguredFenceMaterial() {
         Plugin plugin = Bukkit.getPluginManager().getPlugin("JocoTerrenos");
-        if (plugin == null) return Material.OAK_FENCE;
-        String matName = plugin.getConfig().getString("lands.fence-material", plugin.getConfig().getString("terrenos.fence-material", "OAK_FENCE"));
+        if (plugin == null) return Material.FENCE;
+        String matName = plugin.getConfig().getString("lands.fence-material", plugin.getConfig().getString("terrenos.fence-material", "FENCE"));
         try {
             return Material.valueOf(matName.toUpperCase());
         } catch (IllegalArgumentException ex) {
-            return Material.OAK_FENCE;
+            return Material.FENCE;
         }
     }
 

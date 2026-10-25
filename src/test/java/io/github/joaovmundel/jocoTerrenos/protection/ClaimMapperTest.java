@@ -16,7 +16,7 @@ public class ClaimMapperTest {
         Terreno terreno = new Terreno();
         terreno.setId(7L);
         terreno.setName("casa");
-        terreno.setDonoUUID("owner-uuid");
+        terreno.setDonoNome("Owner");
         terreno.setLocation(location);
         terreno.setSize(size);
         terreno.setPvp(false);
@@ -32,7 +32,15 @@ public class ClaimMapperTest {
         assertEquals(7L, claim.getId());
         assertEquals("world", claim.getWorld());
         assertEquals(new Bounds(98, 102, 198, 202), claim.getBounds());
-        assertEquals("owner-uuid", claim.getOwnerKey());
+    }
+
+    @Test
+    public void ownerKeyIsTheLowercaseName() {
+        Claim claim = ClaimMapper.toClaim(terreno("world:0.50:64.00:0.50", 5));
+
+        assertEquals("owner", claim.getOwnerKey());
+        assertTrue(claim.allowsBuild("owner"));
+        assertFalse(claim.allowsBuild("Owner"));
     }
 
     @Test
@@ -51,19 +59,19 @@ public class ClaimMapperTest {
     }
 
     @Test
-    public void copiesFlagsAndMembers() {
+    public void copiesFlagsAndLowercasesMemberNames() {
         Terreno terreno = terreno("world:0.50:64.00:0.50", 5);
         terreno.setPvp(true);
         terreno.setMobs(false);
         terreno.setPublicAccess(true);
-        terreno.getMembers().add(new TerrenoMember(7L, "friend-uuid", TerrenoRole.MEMBER));
+        terreno.getMembers().add(new TerrenoMember(7L, "Friend", TerrenoRole.MEMBER));
 
         Claim claim = ClaimMapper.toClaim(terreno);
 
         assertTrue(claim.isPvp());
         assertFalse(claim.isMobs());
         assertTrue(claim.isPublicAccess());
-        assertTrue(claim.allowsBuild("friend-uuid"));
+        assertTrue(claim.allowsBuild("friend"));
         assertFalse(claim.allowsBuild("someone-else"));
     }
 

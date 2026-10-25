@@ -55,26 +55,8 @@ terreno.comprar.area-indisponivel: '&cÁrea indisponível! O terreno precisa est
 # Terreno listar
 terreno.listar.vazio: '&eVocê não possui terrenos.'
 terreno.listar.titulo: '&a&l=== Seus Terrenos ==='
-#Essas mensagens JSON podem ser usadas em qualquer lugar que achar necessário se a versão do servidor suportar.
-terreno.listar.linha: 'json:[
-  { "text": "#", "color": "gray" },
-  { "text": "{id}", "color": "gray" },
-  { "text": " - ", "color": "gray" },
-  {
-    "text": "{name}",
-    "color": "gold",
-    "underlined": true,
-    "clickEvent": { "action": "run_command", "value": "/terreno tp {name}" },
-    "hoverEvent": { "action": "show_text", "value": [{ "text": "Teleportar para ", "color": "white" }, { "text": "{name}", "color": "yellow" }] }
-  },
-  { "text": ": ", "color": "gray" },
-  { "text": "Tamanho: ", "color": "white" },
-  { "text": "{size}x{size}", "color": "yellow" },
-  { "text": " - PvP: ", "color": "white" },
-  { "text": "{pvp}", "color": "white" },
-  { "text": " - Mobs: ", "color": "white" },
-  { "text": "{mobs}", "color": "white" }
-]'
+# Sem texto clicável: o chat do Minecraft 1.5.2 não suporta JSON.
+terreno.listar.linha: '&7#{id} - &6{name}&7: &fTamanho: &e{size}x{size} &f- PvP: {pvp} &f- Mobs: {mobs}'
 
 # Terreno info
 terreno.info.nao-no-terreno: '&eVocê não está em nenhum terreno no momento.'

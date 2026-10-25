@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Immutable snapshot of a land as the protection sees it. Player keys are opaque strings (UUIDs here); the
- * caller must use the same representation for owners, members and the player being checked.
+ * Immutable snapshot of a land as the protection sees it. Player keys are opaque strings (lowercase player
+ * names on 1.5.2); the caller must use the same representation for owners, members and the player being checked.
  */
 public final class Claim {
 

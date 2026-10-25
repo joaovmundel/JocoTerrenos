@@ -40,31 +40,15 @@ public class LocationUtils {
      * Formato esperado: "world:x:y:z"
      */
     public static Location converterLocalizacao(String locationStr) {
-        if (locationStr == null || locationStr.isEmpty()) {
+        LocationRaw raw = converterLocalizacaoRaw(locationStr);
+        if (raw == null) {
             return null;
         }
-
-        try {
-            String[] parts = locationStr.split(":");
-            if (parts.length != 4) {
-                return null;
-            }
-
-            String worldName = parts[0].trim();
-            // Use parsing que lida com vírgulas como separador decimal
-            double x = parseLocaleDouble(parts[1]);
-            double y = parseLocaleDouble(parts[2]);
-            double z = parseLocaleDouble(parts[3]);
-
-            org.bukkit.World world = org.bukkit.Bukkit.getWorld(worldName);
-            if (world == null) {
-                return null;
-            }
-
-            return new Location(world, x, y, z);
-        } catch (Exception e) {
+        org.bukkit.World world = org.bukkit.Bukkit.getWorld(raw.worldName());
+        if (world == null) {
             return null;
         }
+        return new Location(world, raw.x(), raw.y(), raw.z());
     }
 
     /**
@@ -75,22 +59,44 @@ public class LocationUtils {
         if (locationStr == null || locationStr.isEmpty()) {
             return null;
         }
-        try {
-            String[] parts = locationStr.split(":");
-            if (parts.length != 4) return null;
-            String worldName = parts[0].trim();
-            double x = parseLocaleDouble(parts[1]);
-            double y = parseLocaleDouble(parts[2]);
-            double z = parseLocaleDouble(parts[3]);
-            return new LocationRaw(worldName, x, y, z);
-        } catch (Exception e) {
+        String[] parts = locationStr.split(":");
+        if (parts.length != 4) {
             return null;
         }
+        return new LocationRaw(parts[0].trim(), parseLocaleDouble(parts[1]), parseLocaleDouble(parts[2]), parseLocaleDouble(parts[3]));
     }
 
     /**
-     * DTO simples para parsing sem Bukkit.
+     * DTO simples para parsing sem Bukkit. Usa os mesmos acessores de um {@code record} (Java 16+), que
+     * não existe no Java 7.
      */
-    public record LocationRaw(String worldName, double x, double y, double z) {
+    public static final class LocationRaw {
+        private final String worldName;
+        private final double x;
+        private final double y;
+        private final double z;
+
+        public LocationRaw(String worldName, double x, double y, double z) {
+            this.worldName = worldName;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public String worldName() {
+            return worldName;
+        }
+
+        public double x() {
+            return x;
+        }
+
+        public double y() {
+            return y;
+        }
+
+        public double z() {
+            return z;
+        }
     }
 }

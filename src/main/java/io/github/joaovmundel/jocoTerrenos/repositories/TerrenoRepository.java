@@ -1,6 +1,6 @@
 package io.github.joaovmundel.jocoTerrenos.repositories;
 
-import io.github.joaovmundel.jocoTerrenos.database.DatabaseManager;
+import io.github.joaovmundel.jocoTerrenos.database.ConnectionProvider;
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoMember;
@@ -14,151 +14,160 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Reads and writes lands and their members. Every method uses the single shared connection of the
+ * {@link ConnectionProvider} (never closed here), so it must be called from the main thread only.
+ * <p>
+ * Methods that find one land return {@code null} when it does not exist; failures are logged and reported as
+ * {@code null}/{@code false}, except {@link #loadAll()} which throws because an unreadable database must not
+ * look like an empty one.
+ */
 public class TerrenoRepository {
 
-    private final DatabaseManager databaseManager;
+    private static final String INSERT_TERRENO = "INSERT INTO terrenos "
+            + "(dono_nome, name, db_name_key, location, size, pvp, mobs, public_access, created_at, updated_at) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    private final ConnectionProvider connections;
     private final Logger logger;
 
-    public TerrenoRepository(DatabaseManager databaseManager, Logger logger) {
-        this.databaseManager = databaseManager;
+    public TerrenoRepository(ConnectionProvider connections, Logger logger) {
+        this.connections = connections;
         this.logger = logger;
     }
 
     /**
-     * Cria um terreno no banco de dados
+     * Unique key of a land: owner and name, both case-insensitive.
      */
-    public Optional<Terreno> create(Terreno terreno) {
-        String sql = """
-                    INSERT INTO terrenos (dono_uuid, name, db_name_key, location, size, pvp, mobs, public_access)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """;
+    public static String nameKey(String donoNome, String name) {
+        return donoNome.toLowerCase(Locale.ENGLISH) + "+" + name.trim().toLowerCase(Locale.ENGLISH);
+    }
 
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    /**
+     * Cria um terreno no banco de dados
+     *
+     * @return the land with its generated id, or {@code null} if it could not be saved
+     */
+    public Terreno create(Terreno terreno) {
+        long now = System.currentTimeMillis();
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement(INSERT_TERRENO, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, terreno.getDonoNome());
+                stmt.setString(2, terreno.getName());
+                stmt.setString(3, nameKey(terreno.getDonoNome(), terreno.getName()));
+                stmt.setString(4, terreno.getLocation());
+                stmt.setInt(5, terreno.getSize());
+                stmt.setBoolean(6, terreno.getPvp());
+                stmt.setBoolean(7, terreno.getMobs());
+                stmt.setBoolean(8, terreno.getPublicAccess());
+                stmt.setLong(9, now);
+                stmt.setLong(10, now);
 
-            stmt.setString(1, terreno.getDonoUUID());
-            stmt.setString(2, terreno.getName());
-            // db_name_key = ownerUUID + "+" + lower(name)
-            stmt.setString(3, terreno.getDonoUUID() + "+" + terreno.getName().toLowerCase());
-            stmt.setString(4, terreno.getLocation());
-            stmt.setInt(5, terreno.getSize());
-            stmt.setBoolean(6, terreno.getPvp());
-            stmt.setBoolean(7, terreno.getMobs());
-            stmt.setBoolean(8, terreno.getPublicAccess());
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        terreno.setId(generatedKeys.getLong(1));
-                        logger.info("Terreno criado com ID: " + terreno.getId());
-                        return Optional.of(terreno);
+                if (stmt.executeUpdate() > 0) {
+                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            terreno.setId(generatedKeys.getLong(1));
+                            logger.info("Terreno criado com ID: " + terreno.getId());
+                            return terreno;
+                        }
                     }
                 }
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao criar terreno", e);
         }
-
-        return Optional.empty();
+        return null;
     }
 
     /**
-     * Busca um terreno pelo "ID"
+     * Busca um terreno pelo ID
+     *
+     * @return the land with its members, or {@code null} if there is none
      */
-    public Optional<Terreno> findById(Long id) {
-        String sql = "SELECT * FROM terrenos WHERE id = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setLong(1, id);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    Terreno terreno = mapResultSetToTerreno(rs);
-                    // Carrega os membros do terreno
-                    terreno.setMembers(findMembersByTerrenoId(id));
-                    return Optional.of(terreno);
-                }
+    public Terreno findById(long id) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("SELECT * FROM terrenos WHERE id = ?")) {
+                stmt.setLong(1, id);
+                return readFirstTerreno(stmt);
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao buscar terreno por ID: " + id, e);
         }
-
-        return Optional.empty();
+        return null;
     }
 
     /**
-     * Busca todos os terrenos de um dono (UUID)
+     * Busca um terreno pela chave de nome (dono + nome)
+     *
+     * @return the land with its members, or {@code null} if there is none
      */
-    public List<Terreno> findByDonoUUID(String donoUUID) {
-        String sql = "SELECT * FROM terrenos WHERE dono_uuid = ?";
-        List<Terreno> terrenos = new ArrayList<>();
+    public Terreno findByNameKey(String dbNameKey) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("SELECT * FROM terrenos WHERE db_name_key = ?")) {
+                stmt.setString(1, dbNameKey);
+                return readFirstTerreno(stmt);
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao buscar terreno por nomeKey: " + dbNameKey, e);
+        }
+        return null;
+    }
 
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+    private Terreno readFirstTerreno(PreparedStatement stmt) throws SQLException {
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (!rs.next()) {
+                return null;
+            }
+            Terreno terreno = mapResultSetToTerreno(rs);
+            terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
+            return terreno;
+        }
+    }
 
-            stmt.setString(1, donoUUID);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Terreno terreno = mapResultSetToTerreno(rs);
-                    terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
-                    terrenos.add(terreno);
+    /**
+     * Busca todos os terrenos de um dono
+     */
+    public List<Terreno> findByDono(String donoNome) {
+        List<Terreno> terrenos = new ArrayList<Terreno>();
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("SELECT * FROM terrenos WHERE dono_nome = ?")) {
+                stmt.setString(1, donoNome);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        terrenos.add(mapResultSetToTerreno(rs));
+                    }
                 }
             }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao buscar terrenos do dono: " + donoUUID, e);
-        }
-
-        return terrenos;
-    }
-
-    /**
-     * Busca todos os terrenos
-     */
-    public List<Terreno> findAll() {
-        String sql = "SELECT * FROM terrenos";
-        List<Terreno> terrenos = new ArrayList<>();
-
-        try (Connection conn = databaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                Terreno terreno = mapResultSetToTerreno(rs);
+            for (Terreno terreno : terrenos) {
                 terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
-                terrenos.add(terreno);
             }
-
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao buscar todos os terrenos", e);
+            logger.log(Level.SEVERE, "Erro ao buscar terrenos do dono: " + donoNome, e);
         }
-
         return terrenos;
     }
 
     /**
-     * Loads every land with its members using two queries. Unlike {@link #findAll()} a failure is reported
-     * instead of looking like an empty database, which would leave every land unprotected.
+     * Loads every land with its members using two queries. A failure is reported instead of looking like an
+     * empty database, which would leave every land unprotected.
      *
      * @throws StorageException if the database cannot be read or holds an unknown member role
      */
     public List<Terreno> loadAll() throws StorageException {
-        Map<Long, Terreno> terrenosById = new LinkedHashMap<>();
+        Map<Long, Terreno> terrenosById = new LinkedHashMap<Long, Terreno>();
 
-        try (Connection conn = databaseManager.getConnection()) {
-            try (Statement stmt = conn.createStatement();
+        try {
+            Connection connection = connections.get();
+            try (Statement stmt = connection.createStatement();
                  ResultSet rs = stmt.executeQuery("SELECT * FROM terrenos")) {
                 while (rs.next()) {
                     Terreno terreno = mapResultSetToTerreno(rs);
@@ -166,259 +175,182 @@ public class TerrenoRepository {
                 }
             }
 
-            try (Statement stmt = conn.createStatement();
+            try (Statement stmt = connection.createStatement();
                  ResultSet rs = stmt.executeQuery("SELECT * FROM terreno_members")) {
                 while (rs.next()) {
                     Terreno terreno = terrenosById.get(rs.getLong("terreno_id"));
                     if (terreno == null) {
-                        continue; // orphan row left behind by a delete (SQLite does not enforce the cascade)
+                        continue; // orphan row; the cascade should have removed it
                     }
-                    TerrenoMember member = new TerrenoMember();
-                    member.setTerrenoId(terreno.getId());
-                    member.setMemberUUID(rs.getString("member_uuid"));
-                    member.setMemberRole(TerrenoRole.valueOf(rs.getString("member_role")));
-                    terreno.getMembers().add(member);
+                    terreno.getMembers().add(mapResultSetToMember(rs));
                 }
             }
         } catch (SQLException | IllegalArgumentException e) {
             throw new StorageException("Não foi possível carregar os terrenos do banco de dados", e);
         }
 
-        return new ArrayList<>(terrenosById.values());
+        return new ArrayList<Terreno>(terrenosById.values());
     }
 
     /**
      * Atualiza um terreno existente
      */
     public boolean update(Terreno terreno) {
-        String sql = """
-                    UPDATE terrenos
-                    SET dono_uuid = ?, name = ?, db_name_key = ?, location = ?, size = ?, pvp = ?, mobs = ?, public_access = ?, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = ?
-                """;
+        String sql = "UPDATE terrenos SET dono_nome = ?, name = ?, db_name_key = ?, location = ?, size = ?, "
+                + "pvp = ?, mobs = ?, public_access = ?, updated_at = ? WHERE id = ?";
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setString(1, terreno.getDonoNome());
+                stmt.setString(2, terreno.getName());
+                stmt.setString(3, nameKey(terreno.getDonoNome(), terreno.getName()));
+                stmt.setString(4, terreno.getLocation());
+                stmt.setInt(5, terreno.getSize());
+                stmt.setBoolean(6, terreno.getPvp());
+                stmt.setBoolean(7, terreno.getMobs());
+                stmt.setBoolean(8, terreno.getPublicAccess());
+                stmt.setLong(9, System.currentTimeMillis());
+                stmt.setLong(10, terreno.getId());
 
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, terreno.getDonoUUID());
-            stmt.setString(2, terreno.getName());
-            stmt.setString(3, terreno.getDonoUUID() + "+" + terreno.getName().toLowerCase());
-            stmt.setString(4, terreno.getLocation());
-            stmt.setInt(5, terreno.getSize());
-            stmt.setBoolean(6, terreno.getPvp());
-            stmt.setBoolean(7, terreno.getMobs());
-            stmt.setBoolean(8, terreno.getPublicAccess());
-            stmt.setLong(9, terreno.getId());
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.info("Terreno atualizado: " + terreno.getId());
-                return true;
+                if (stmt.executeUpdate() > 0) {
+                    logger.info("Terreno atualizado: " + terreno.getId());
+                    return true;
+                }
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao atualizar terreno: " + terreno.getId(), e);
         }
-
         return false;
     }
 
     /**
-     * Deleta um terreno pelo "ID"
+     * Deleta um terreno pelo ID (os membros saem junto, por ON DELETE CASCADE)
      */
-    public boolean delete(Long id) {
-        String sql = "DELETE FROM terrenos WHERE id = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setLong(1, id);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.info("Terreno deletado: " + id);
-                return true;
+    public boolean delete(long id) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM terrenos WHERE id = ?")) {
+                stmt.setLong(1, id);
+                if (stmt.executeUpdate() > 0) {
+                    logger.info("Terreno deletado: " + id);
+                    return true;
+                }
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao deletar terreno: " + id, e);
         }
-
         return false;
     }
 
     /**
      * Adiciona um membro ao terreno
      */
-    public boolean addMember(Long terrenoId, String memberUUID, TerrenoRole role) {
-        String sql = """
-                    INSERT INTO terreno_members (terreno_id, member_uuid, member_role)
-                    VALUES (?, ?, ?)
-                """;
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setLong(1, terrenoId);
-            stmt.setString(2, memberUUID);
-            stmt.setString(3, role.name());
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.info("Membro adicionado ao terreno " + terrenoId + ": " + memberUUID);
-                return true;
+    public boolean addMember(long terrenoId, String memberNome, TerrenoRole role) {
+        String sql = "INSERT INTO terreno_members (terreno_id, member_nome, member_role, added_at) VALUES (?, ?, ?, ?)";
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setLong(1, terrenoId);
+                stmt.setString(2, memberNome);
+                stmt.setString(3, role.name());
+                stmt.setLong(4, System.currentTimeMillis());
+                if (stmt.executeUpdate() > 0) {
+                    logger.info("Membro adicionado ao terreno " + terrenoId + ": " + memberNome);
+                    return true;
+                }
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao adicionar membro ao terreno: " + terrenoId, e);
         }
-
         return false;
     }
 
     /**
      * Remove um membro do terreno
      */
-    public boolean removeMember(Long terrenoId, String memberUUID) {
-        String sql = "DELETE FROM terreno_members WHERE terreno_id = ? AND member_uuid = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setLong(1, terrenoId);
-            stmt.setString(2, memberUUID);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.info("Membro removido do terreno " + terrenoId + ": " + memberUUID);
-                return true;
+    public boolean removeMember(long terrenoId, String memberNome) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM terreno_members WHERE terreno_id = ? AND member_nome = ?")) {
+                stmt.setLong(1, terrenoId);
+                stmt.setString(2, memberNome);
+                if (stmt.executeUpdate() > 0) {
+                    logger.info("Membro removido do terreno " + terrenoId + ": " + memberNome);
+                    return true;
+                }
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao remover membro do terreno: " + terrenoId, e);
         }
-
         return false;
     }
 
     /**
      * Atualiza o papel de um membro no terreno
      */
-    public boolean updateMemberRole(Long terrenoId, String memberUUID, TerrenoRole newRole) {
-        String sql = "UPDATE terreno_members SET member_role = ? WHERE terreno_id = ? AND member_uuid = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, newRole.name());
-            stmt.setLong(2, terrenoId);
-            stmt.setString(3, memberUUID);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.info("Papel do membro atualizado no terreno " + terrenoId + ": " + memberUUID + " -> " + newRole);
-                return true;
+    public boolean updateMemberRole(long terrenoId, String memberNome, TerrenoRole newRole) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement(
+                    "UPDATE terreno_members SET member_role = ? WHERE terreno_id = ? AND member_nome = ?")) {
+                stmt.setString(1, newRole.name());
+                stmt.setLong(2, terrenoId);
+                stmt.setString(3, memberNome);
+                if (stmt.executeUpdate() > 0) {
+                    logger.info("Papel do membro atualizado no terreno " + terrenoId + ": " + memberNome + " -> " + newRole);
+                    return true;
+                }
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao atualizar papel do membro: " + terrenoId, e);
         }
-
         return false;
     }
 
     /**
      * Busca todos os membros de um terreno
      */
-    public List<TerrenoMember> findMembersByTerrenoId(Long terrenoId) {
-        String sql = "SELECT * FROM terreno_members WHERE terreno_id = ?";
-        List<TerrenoMember> members = new ArrayList<>();
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setLong(1, terrenoId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    TerrenoMember member = new TerrenoMember();
-                    member.setTerrenoId(rs.getLong("terreno_id"));
-                    member.setMemberUUID(rs.getString("member_uuid"));
-                    member.setMemberRole(TerrenoRole.valueOf(rs.getString("member_role")));
-                    members.add(member);
+    public List<TerrenoMember> findMembersByTerrenoId(long terrenoId) {
+        List<TerrenoMember> members = new ArrayList<TerrenoMember>();
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("SELECT * FROM terreno_members WHERE terreno_id = ?")) {
+                stmt.setLong(1, terrenoId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        members.add(mapResultSetToMember(rs));
+                    }
                 }
             }
-
-        } catch (SQLException e) {
+        } catch (SQLException | IllegalArgumentException e) {
             logger.log(Level.SEVERE, "Erro ao buscar membros do terreno: " + terrenoId, e);
         }
-
         return members;
     }
 
     /**
-     * Busca um terreno pelo nomeKey (chave de nome única)
+     * Verifica se o dono já tem um terreno com esse nome (ignorando maiúsculas/minúsculas)
      */
-    public Optional<Terreno> findByNameKey(String dbNameKey) {
-        String sql = "SELECT * FROM terrenos WHERE db_name_key = ?";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, dbNameKey);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    Terreno terreno = mapResultSetToTerreno(rs);
-                    terreno.setMembers(findMembersByTerrenoId(terreno.getId()));
-                    return Optional.of(terreno);
+    public boolean existsByOwnerAndName(String donoNome, String nome) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(1) FROM terrenos WHERE db_name_key = ?")) {
+                stmt.setString(1, nameKey(donoNome, nome));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    return rs.next() && rs.getInt(1) > 0;
                 }
             }
-
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao buscar terreno por nomeKey: " + dbNameKey, e);
+            logger.log(Level.SEVERE, "Erro ao verificar existência de nome: " + nome + " para dono: " + donoNome, e);
         }
-
-        return Optional.empty();
-    }
-
-    /**
-     * Verifica se um terreno com o mesmo dono e nome (ignorando maiúsculas/minúsculas) já existe
-     */
-    public boolean existsByOwnerAndNameIgnoreCase(String donoUUID, String nome) {
-        String sql = "SELECT COUNT(1) FROM terrenos WHERE dono_uuid = ? AND LOWER(name) = LOWER(?)";
-
-        try (Connection conn = databaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, donoUUID);
-            stmt.setString(2, nome);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao verificar existência de nome: " + nome + " para dono: " + donoUUID, e);
-        }
-
         return false;
     }
 
-    /**
-     * Mapeia um ResultSet para um objeto Terreno
-     */
     private Terreno mapResultSetToTerreno(ResultSet rs) throws SQLException {
         Terreno terreno = new Terreno();
         terreno.setId(rs.getLong("id"));
-        terreno.setDonoUUID(rs.getString("dono_uuid"));
+        terreno.setDonoNome(rs.getString("dono_nome"));
         terreno.setName(rs.getString("name"));
         terreno.setLocation(rs.getString("location"));
         terreno.setSize(rs.getInt("size"));
@@ -427,5 +359,12 @@ public class TerrenoRepository {
         terreno.setPublicAccess(rs.getBoolean("public_access"));
         return terreno;
     }
-}
 
+    private TerrenoMember mapResultSetToMember(ResultSet rs) throws SQLException {
+        TerrenoMember member = new TerrenoMember();
+        member.setTerrenoId(rs.getLong("terreno_id"));
+        member.setMemberNome(rs.getString("member_nome"));
+        member.setMemberRole(TerrenoRole.valueOf(rs.getString("member_role")));
+        return member;
+    }
+}

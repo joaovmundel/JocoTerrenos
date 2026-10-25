@@ -2,17 +2,17 @@ package io.github.joaovmundel.jocoTerrenos.service;
 
 import io.github.joaovmundel.jocoTerrenos.protection.Claim;
 import io.github.joaovmundel.jocoTerrenos.protection.ClaimIndex;
+import io.github.joaovmundel.jocoTerrenos.utils.PlayerKeys;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Answers "may this player touch that spot?" for the listeners and tells the player when the answer is no.
- * Players are identified by UUID, the same key the lands are stored with.
+ * Players are identified by lowercase name, the same key the lands are stored with.
  */
 public final class ProtectionService {
 
@@ -25,7 +25,7 @@ public final class ProtectionService {
     private final ClaimIndex claimIndex;
     private final MessageService messages;
     private final long messageCooldownMillis;
-    private final Map<UUID, Long> lastMessageAt = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastMessageAt = new ConcurrentHashMap<String, Long>();
 
     public ProtectionService(ClaimIndex claimIndex, MessageService messages, long messageCooldownMillis) {
         this.claimIndex = claimIndex;
@@ -52,12 +52,12 @@ public final class ProtectionService {
 
     /** @param claim the land, or {@code null} for unclaimed ground (always allowed) */
     public boolean canBuild(Player player, Claim claim) {
-        return claim == null || claim.allowsBuild(keyOf(player)) || hasBypass(player);
+        return claim == null || claim.allowsBuild(PlayerKeys.of(player)) || hasBypass(player);
     }
 
     /** @param claim the land, or {@code null} for unclaimed ground (always allowed) */
     public boolean canUse(Player player, Claim claim) {
-        return claim == null || claim.allowsUse(keyOf(player)) || hasBypass(player);
+        return claim == null || claim.allowsUse(PlayerKeys.of(player)) || hasBypass(player);
     }
 
     /**
@@ -86,21 +86,18 @@ public final class ProtectionService {
      * the message is rate limited per player.
      */
     public void notifyDenied(Player player, String messageKey) {
+        String key = PlayerKeys.of(player);
         long now = System.currentTimeMillis();
-        Long last = lastMessageAt.get(player.getUniqueId());
+        Long last = lastMessageAt.get(key);
         if (last != null && now - last < messageCooldownMillis) {
             return;
         }
-        lastMessageAt.put(player.getUniqueId(), now);
+        lastMessageAt.put(key, now);
         messages.send(player, messageKey);
     }
 
     /** Drops the rate limit state of a player who left. */
     public void forget(Player player) {
-        lastMessageAt.remove(player.getUniqueId());
-    }
-
-    private static String keyOf(Player player) {
-        return player.getUniqueId().toString();
+        lastMessageAt.remove(PlayerKeys.of(player));
     }
 }

@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Stops players from changing or operating blocks inside lands they cannot build on. It only translates
@@ -90,7 +91,8 @@ public final class BuildProtectionListener implements Listener {
         }
 
         event.setUseInteractedBlock(Event.Result.DENY);
-        if (event.getItem() != null && ProtectionRules.isRestrictedItem(event.getItem().getType().name())) {
+        ItemStack item = event.getItem();
+        if (item != null && ProtectionRules.isRestrictedItem(item.getType().name())) {
             event.setUseItemInHand(Event.Result.DENY);
         }
         protection.notifyDenied(player, ProtectionService.MESSAGE_DENIED);
@@ -98,7 +100,7 @@ public final class BuildProtectionListener implements Listener {
 
     /** Stepping on something: plates and tripwires follow the "use" rule, trampling farmland needs build access. */
     private void handlePhysical(PlayerInteractEvent event, Player player, Claim claim, Block block) {
-        boolean trampling = block.getType() == Material.FARMLAND;
+        boolean trampling = block.getType() == Material.SOIL;
         if (!trampling && protection.canUse(player, claim)) {
             return;
         }

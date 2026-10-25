@@ -1,11 +1,13 @@
-# JocoTerrenos Configuration
+# JocoTerrenos Configuration (Spigot 1.5.2)
 
 # Active language for messages (e.g., pt_BR, en_US)
 language: pt_BR
 
 # Database Settings
+# The SQLite and MySQL drivers come bundled with the server (CraftBukkit/Spigot 1.5.2);
+# PostgreSQL is not supported on this version.
 database:
-  # Database type: SQLITE, MYSQL, POSTGRESQL
+  # Database type: SQLITE or MYSQL
   type: SQLITE
 
   # Settings for SQLite (used when type=SQLITE)
@@ -20,40 +22,6 @@ database:
     database: jocoterrenos
     username: root
     password: senha
-    # Additional connection properties
-    properties:
-      useSSL: false
-      autoReconnect: true
-      cachePrepStmts: true
-      prepStmtCacheSize: 250
-      prepStmtCacheSqlLimit: 2048
-
-  # Settings for PostgreSQL (used when type=POSTGRESQL)
-  postgresql:
-    host: localhost
-    port: 5432
-    database: jocoterrenos
-    username: postgres
-    password: senha
-    # Database schema
-    schema: public
-    # Additional connection properties
-    properties:
-      ssl: false
-      autoReconnect: true
-
-  # Connection Pool Settings (HikariCP)
-  pool:
-    # Maximum pool size
-    maximum-pool-size: 10
-    # Minimum number of idle connections
-    minimum-idle: 2
-    # Maximum lifetime of a connection (in milliseconds)
-    maximum-lifetime: 1800000
-    # Wait time to obtain a connection (in milliseconds)
-    connection-timeout: 5000
-    # Maximum time a connection can remain idle (in milliseconds)
-    idle-timeout: 600000
 
 # Protection Settings
 protection:
@@ -73,11 +41,11 @@ lands:
   spacing-between-lands: 3
   # Price per block for land purchase
   block-price: 1000.0
-  # Material for placed fences (e.g., OAK_FENCE, SPRUCE_FENCE, NETHER_BRICK_FENCE)
-  fence-material: OAK_FENCE
+  # Material for placed fences (FENCE or NETHER_FENCE)
+  fence-material: FENCE
   teleport:
     min-y: 0
-    max-y: 320
+    max-y: 255
     search:
       max-depth: 64
     void:

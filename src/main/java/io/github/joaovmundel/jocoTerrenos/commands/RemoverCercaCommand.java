@@ -7,7 +7,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
 public class RemoverCercaCommand implements CommandExecutor {
 
@@ -20,16 +19,17 @@ public class RemoverCercaCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission(PERMISSION)) {
             messages.send(sender, "no-permission");
             return true;
         }
 
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player)) {
             messages.send(sender, "only-player");
             return true;
         }
+        Player player = (Player) sender;
 
         if (args.length < 1) {
             messages.send(player, "removercerca.usage");

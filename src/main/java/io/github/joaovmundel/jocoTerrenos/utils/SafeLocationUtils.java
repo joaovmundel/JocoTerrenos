@@ -7,6 +7,9 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public final class SafeLocationUtils {
+    /** Minecraft 1.5.2 worlds start at y=0 (World has no getMinHeight). */
+    private static final int MIN_HEIGHT = 0;
+
     private SafeLocationUtils() {
     }
 
@@ -14,7 +17,7 @@ public final class SafeLocationUtils {
         if (center == null || center.getWorld() == null || size <= 0) return null;
         World world = center.getWorld();
         int half = size / 2;
-        int minY = config.getInt("lands.teleport.min-y", config.getInt("terrenos.teleport.altura-min", world.getMinHeight()));
+        int minY = config.getInt("lands.teleport.min-y", config.getInt("terrenos.teleport.altura-min", MIN_HEIGHT));
         int maxY = config.getInt("lands.teleport.max-y", config.getInt("terrenos.teleport.altura-max", world.getMaxHeight()));
 
         // Try center first
@@ -48,7 +51,7 @@ public final class SafeLocationUtils {
 
     private static Location surfaceAt(World world, int x, int z, int minY, int maxY) {
         // Scan from top down to find first solid block with 2 air blocks above
-        for (int y = Math.min(maxY, world.getMaxHeight() - 1); y >= Math.max(minY, world.getMinHeight()); y--) {
+        for (int y = Math.min(maxY, world.getMaxHeight() - 1); y >= Math.max(minY, MIN_HEIGHT); y--) {
             Block base = world.getBlockAt(x, y, z);
             Block head = world.getBlockAt(x, y + 1, z);
             Block aboveHead = world.getBlockAt(x, y + 2, z);
@@ -62,7 +65,7 @@ public final class SafeLocationUtils {
 
     private static Location findGroundBelow(World world, int x, int z, int minY) {
         // Scan downwards to first solid block, then place player on top
-        for (int y = world.getMaxHeight() - 1; y >= Math.max(minY, world.getMinHeight()); y--) {
+        for (int y = world.getMaxHeight() - 1; y >= Math.max(minY, MIN_HEIGHT); y--) {
             Block b = world.getBlockAt(x, y, z);
             if (b.getType().isSolid()) {
                 Block head = world.getBlockAt(x, y + 1, z);
@@ -86,7 +89,7 @@ public final class SafeLocationUtils {
     }
 
     private static boolean isAirLike(Material m) {
-        return m == Material.AIR || m == Material.CAVE_AIR || m == Material.VOID_AIR;
+        return m == Material.AIR;
     }
 
     private static boolean isVoidWorld(World world) {
@@ -98,7 +101,7 @@ public final class SafeLocationUtils {
         World world = center.getWorld();
         if (world == null) return null;
         Material mat = Material.GLASS;
-        int y = Math.max(center.getBlockY(), world.getMinHeight() + 1);
+        int y = Math.max(center.getBlockY(), MIN_HEIGHT + 1);
         int x = center.getBlockX();
         int z = center.getBlockZ();
         Block ground = world.getBlockAt(x, y - 1, z);

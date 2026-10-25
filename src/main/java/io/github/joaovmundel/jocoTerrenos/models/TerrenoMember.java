@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TerrenoMember {
     private Long terrenoId;
-    private String memberUUID;
+    private String memberNome;
     private TerrenoRole memberRole;
 }

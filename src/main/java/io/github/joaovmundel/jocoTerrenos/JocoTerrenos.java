@@ -5,6 +5,8 @@ import io.github.joaovmundel.jocoTerrenos.commands.RemoverCercaCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.ResizeCercaCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.TerrenoCommand;
 import io.github.joaovmundel.jocoTerrenos.database.DatabaseManager;
+import io.github.joaovmundel.jocoTerrenos.economy.EconomyGateway;
+import io.github.joaovmundel.jocoTerrenos.economy.VaultEconomyGateway;
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.listener.BuildProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EntityProtectionListener;
@@ -15,10 +17,7 @@ import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.service.ProtectionService;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import lombok.Getter;
-import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
@@ -34,7 +33,6 @@ public final class JocoTerrenos extends JavaPlugin {
     private TerrenoService terrenoService;
     private ClaimIndex claimIndex;
     private ProtectionService protectionService;
-    private Economy economy;
     private MessageService messageService;
 
     @Override
@@ -49,18 +47,20 @@ public final class JocoTerrenos extends JavaPlugin {
 
         // Inicializa o banco de dados
         databaseManager = new DatabaseManager(this);
-        databaseManager.initialize();
-        if (!databaseManager.isConnected()) {
-            abortStartup("Banco de dados indisponível; sem ele os terrenos ficariam sem proteção.", null);
+        try {
+            databaseManager.initialize();
+        } catch (StorageException e) {
+            abortStartup("Banco de dados indisponível; sem ele os terrenos ficariam sem proteção.", e);
             return;
         }
 
         // Inicializa os repositórios
-        terrenoRepository = new TerrenoRepository(databaseManager, getLogger());
+        terrenoRepository = new TerrenoRepository(databaseManager.getConnectionProvider(), getLogger());
 
         // Inicializa os services
         claimIndex = new ClaimIndex();
-        terrenoService = new TerrenoService(terrenoRepository, getConfig(), messageService, claimIndex, getLogger());
+        EconomyGateway economy = new VaultEconomyGateway();
+        terrenoService = new TerrenoService(terrenoRepository, getConfig(), messageService, claimIndex, economy, getLogger());
         try {
             terrenoService.reloadClaims();
         } catch (StorageException e) {
@@ -81,9 +81,9 @@ public final class JocoTerrenos extends JavaPlugin {
         Objects.requireNonNull(getCommand("terreno")).setExecutor(terrenoCmd);
         Objects.requireNonNull(getCommand("terreno")).setTabCompleter(terrenoCmd);
 
-        // Setup Vault Economy
-        setupEconomy();
-
+        if (!economy.isAvailable()) {
+            getLogger().warning("Nenhuma economia registrada no Vault ainda; as compras de terreno ficam indisponíveis até uma ser registrada.");
+        }
         getLogger().info("JocoTerrenos habilitado com sucesso!");
     }
 
@@ -108,21 +108,5 @@ public final class JocoTerrenos extends JavaPlugin {
     private void abortStartup(String message, Exception cause) {
         getLogger().log(Level.SEVERE, message + " O plugin será desabilitado.", cause);
         getServer().getPluginManager().disablePlugin(this);
-    }
-
-    private void setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            getLogger().severe("Vault não encontrado! Desabilitando o plugin.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            getLogger().severe("Provider de Economy não encontrado! Desabilitando o plugin.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        economy = rsp.getProvider();
-        getLogger().info("Economy inicializado com sucesso: " + economy.getName());
     }
 }
