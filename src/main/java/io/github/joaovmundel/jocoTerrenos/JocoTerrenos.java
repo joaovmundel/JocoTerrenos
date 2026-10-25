@@ -11,6 +11,7 @@ import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import io.github.joaovmundel.jocoTerrenos.listener.BuildProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EntityProtectionListener;
+import io.github.joaovmundel.jocoTerrenos.listener.EntryProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EnvironmentProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.protection.ClaimIndex;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
@@ -104,6 +105,7 @@ public final class JocoTerrenos extends JavaPlugin {
         pluginManager.registerEvents(new BuildProtectionListener(protectionService), this);
         pluginManager.registerEvents(new EntityProtectionListener(protectionService), this);
         pluginManager.registerEvents(new EnvironmentProtectionListener(protectionService), this);
+        pluginManager.registerEvents(new EntryProtectionListener(this, protectionService), this);
     }
 
     /** Fails fast: a plugin that cannot protect lands must not keep selling them. */

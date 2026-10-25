@@ -49,6 +49,14 @@ public final class Claim {
         return publicAccess || allowsBuild(playerKey);
     }
 
+    /**
+     * Whether the player may stand inside the land: owner and members always, everyone else only while the
+     * land is public. A private land keeps visitors out entirely, not just away from the blocks.
+     */
+    public boolean allowsEntry(String playerKey) {
+        return publicAccess || allowsBuild(playerKey);
+    }
+
     public long getId() {
         return id;
     }

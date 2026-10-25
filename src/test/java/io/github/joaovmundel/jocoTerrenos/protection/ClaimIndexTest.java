@@ -87,6 +87,17 @@ public class ClaimIndexTest {
     }
 
     @Test
+    public void findByIdFollowsPutAndRemove() {
+        Claim claim = claim(7, "world", new Bounds(0, 10, 0, 10));
+
+        assertNull(index.findById(7));
+        index.put(claim);
+        assertSame(claim, index.findById(7));
+        index.remove(7);
+        assertNull(index.findById(7));
+    }
+
+    @Test
     public void removingAnUnknownIdIsHarmless() {
         index.put(claim(1, "world", new Bounds(0, 10, 0, 10)));
 

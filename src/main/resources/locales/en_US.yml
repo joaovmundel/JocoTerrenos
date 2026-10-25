@@ -6,7 +6,7 @@
 #
 # Do not change locale-version. When a newer plugin version ships new texts, this file is kept as
 # en_US.yml.vN.bak and replaced by the new one; copy your changes from the .bak if you want to keep them.
-locale-version: 1
+locale-version: 2
 
 prefix: '&8[&6Lands&8]&r '
 
@@ -26,7 +26,7 @@ help.lines:
   - '&6/terreno info &e[name] &8- &7Show land information'
   - '&6/terreno pvp &e<name> &8- &7Turn &cPvP &7on or off'
   - '&6/terreno mobs &e<name> &8- &7Turn &cmobs &7on or off'
-  - '&6/terreno publico &e<name> &8- &7Turn &apublic access &7on or off'
+  - '&6/terreno publico &e<name> &8- &7Open or close the land to &avisitors'
   - '&6/terreno tp &e<name> &8- &7Teleport to the land'
   - '&6/terreno deletar &e<name> &8- &7Delete the land and its fences'
 
@@ -74,7 +74,7 @@ terreno.info.tamanho: '&7Size: &f{size}&7x&f{size}'
 terreno.info.localizacao: '&7Location: &f{location}'
 terreno.info.pvp: '&7PvP: {pvp}'
 terreno.info.mobs: '&7Mobs: {mobs}'
-terreno.info.publico: '&7Public access: {public}'
+terreno.info.publico: '&7Visitor entry: {public}'
 terreno.info.membros: '&7Members: &f{count}'
 
 # Delete
@@ -82,12 +82,12 @@ terreno.deletar.usage: '{prefix}&cUsage: &6/terreno deletar &e<name>'
 terreno.deletar.sucesso: '{prefix}&aLand deleted. The fences were removed.'
 terreno.deletar.erro: '{prefix}&cCould not delete the land.'
 
-# PvP, mobs and public access
+# PvP, mobs and visitor entry
 terreno.toggle.nao-dono: '{prefix}&cYou are not the owner of this land.'
 terreno.toggle.erro: '{prefix}&cAn error occurred while updating the land.'
 terreno.toggle.pvp: '{prefix}&7PvP on land &b{name}&7: {status}'
 terreno.toggle.mobs: '{prefix}&7Mobs on land &b{name}&7: {status}'
-terreno.toggle.publico: '{prefix}&7Public access on land &b{name}&7: {status}'
+terreno.toggle.publico: '{prefix}&7Visitor entry on land &b{name}&7: {status}'
 terreno.pvp.usage: '{prefix}&cUsage: &6/terreno pvp &e<name>'
 terreno.mobs.usage: '{prefix}&cUsage: &6/terreno mobs &e<name>'
 terreno.publico.usage: '{prefix}&cUsage: &6/terreno publico &e<name>'
@@ -96,8 +96,8 @@ status.on: '&aON'
 status.off: '&cOFF'
 status.habilitado: '&aOn'
 status.desabilitado: '&cOff'
-status.sim: '&aYes'
-status.nao: '&cNo'
+status.sim: '&aAllowed'
+status.nao: '&cOwner and members only'
 
 # Teleport
 terreno.tp.usage: '{prefix}&cUsage: &6/terreno tp &e<name>'
@@ -115,3 +115,5 @@ terreno.preco.valor: '{prefix}&7Land of &f{size}&7x&f{size}&7: &6{price}'
 # Protection
 protection.denied: '{prefix}&cThis land belongs to &e{owner}&c. You cannot do that here.'
 protection.pvp-disabled: '{prefix}&cPvP is off on this land.'
+protection.private: '{prefix}&cThe land of &e{owner} &cis private. Only the owner and members can enter.'
+protection.expelled: '{prefix}&7You were taken out of the land of &e{owner}&7, which is private.'

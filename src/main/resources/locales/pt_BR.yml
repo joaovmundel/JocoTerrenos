@@ -6,7 +6,7 @@
 #
 # Nao altere locale-version. Quando uma versao nova do plugin trouxer textos novos, este arquivo e guardado
 # como pt_BR.yml.vN.bak e substituido pelo novo; copie suas alteracoes do .bak se quiser mante-las.
-locale-version: 1
+locale-version: 2
 
 prefix: '&8[&6Terrenos&8]&r '
 
@@ -26,7 +26,7 @@ help.lines:
   - '&6/terreno info &e[nome] &8- &7Mostra as informacoes do terreno'
   - '&6/terreno pvp &e<nome> &8- &7Liga ou desliga o &cPvP'
   - '&6/terreno mobs &e<nome> &8- &7Liga ou desliga os &cmobs'
-  - '&6/terreno publico &e<nome> &8- &7Liga ou desliga o &aacesso publico'
+  - '&6/terreno publico &e<nome> &8- &7Libera ou fecha a &aentrada &7de visitantes'
   - '&6/terreno tp &e<nome> &8- &7Teleporta para o terreno'
   - '&6/terreno deletar &e<nome> &8- &7Apaga o terreno e as cercas'
 
@@ -74,7 +74,7 @@ terreno.info.tamanho: '&7Tamanho: &f{size}&7x&f{size}'
 terreno.info.localizacao: '&7Localizacao: &f{location}'
 terreno.info.pvp: '&7PvP: {pvp}'
 terreno.info.mobs: '&7Mobs: {mobs}'
-terreno.info.publico: '&7Acesso publico: {public}'
+terreno.info.publico: '&7Entrada de visitantes: {public}'
 terreno.info.membros: '&7Membros: &f{count}'
 
 # Deletar
@@ -82,12 +82,12 @@ terreno.deletar.usage: '{prefix}&cUso: &6/terreno deletar &e<nome>'
 terreno.deletar.sucesso: '{prefix}&aTerreno deletado. As cercas foram removidas.'
 terreno.deletar.erro: '{prefix}&cNao foi possivel deletar o terreno.'
 
-# PvP, mobs e acesso publico
+# PvP, mobs e entrada de visitantes
 terreno.toggle.nao-dono: '{prefix}&cVoce nao e o dono deste terreno.'
 terreno.toggle.erro: '{prefix}&cOcorreu um erro ao atualizar o terreno.'
 terreno.toggle.pvp: '{prefix}&7PvP no terreno &b{name}&7: {status}'
 terreno.toggle.mobs: '{prefix}&7Mobs no terreno &b{name}&7: {status}'
-terreno.toggle.publico: '{prefix}&7Acesso publico no terreno &b{name}&7: {status}'
+terreno.toggle.publico: '{prefix}&7Entrada de visitantes no terreno &b{name}&7: {status}'
 terreno.pvp.usage: '{prefix}&cUso: &6/terreno pvp &e<nome>'
 terreno.mobs.usage: '{prefix}&cUso: &6/terreno mobs &e<nome>'
 terreno.publico.usage: '{prefix}&cUso: &6/terreno publico &e<nome>'
@@ -96,8 +96,8 @@ status.on: '&aON'
 status.off: '&cOFF'
 status.habilitado: '&aLigado'
 status.desabilitado: '&cDesligado'
-status.sim: '&aSim'
-status.nao: '&cNao'
+status.sim: '&aPermitida'
+status.nao: '&cSomente dono e membros'
 
 # Teleporte
 terreno.tp.usage: '{prefix}&cUso: &6/terreno tp &e<nome>'
@@ -115,3 +115,5 @@ terreno.preco.valor: '{prefix}&7Terreno de &f{size}&7x&f{size}&7: &6{price}'
 # Protecao
 protection.denied: '{prefix}&cEste terreno pertence a &e{owner}&c. Voce nao pode fazer isso aqui.'
 protection.pvp-disabled: '{prefix}&cO PvP esta desligado neste terreno.'
+protection.private: '{prefix}&cO terreno de &e{owner} &ce privado. Somente o dono e os membros podem entrar.'
+protection.expelled: '{prefix}&7Voce foi levado para fora do terreno de &e{owner}&7, que e privado.'

@@ -263,6 +263,10 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             }
 
             Terreno atualizado = terrenoService.buscarTerrenoPorNome(donoNome, nome);
+            if (toggle == Toggle.PUBLICO && !atualizado.getPublicAccess()) {
+                // the land just closed: visitors standing inside must not be left stuck in it
+                plugin.getProtectionService().expelIntruders(atualizado.getId());
+            }
             String nomeTerreno = atualizado.getName();
             switch (toggle) {
                 case PVP:

@@ -17,7 +17,7 @@ public final class ClaimIndex {
 
     private static final int CHUNK_SHIFT = 4;
 
-    private static final Snapshot EMPTY = new Snapshot(new HashMap<String, Map<Long, List<Claim>>>());
+    private static final Snapshot EMPTY = new Snapshot(new HashMap<String, Map<Long, List<Claim>>>(), new HashMap<Long, Claim>());
 
     private final Map<Long, Claim> claimsById = new LinkedHashMap<Long, Claim>();
     private volatile Snapshot snapshot = EMPTY;
@@ -61,6 +61,11 @@ public final class ClaimIndex {
         return null;
     }
 
+    /** @return the claim with that id, or {@code null} */
+    public Claim findById(long id) {
+        return snapshot.byId.get(id);
+    }
+
     /**
      * @param buffer minimum number of free blocks required between {@code area} and any existing claim
      * @return whether {@code area} overlaps no claim and keeps at least {@code buffer} blocks from all of them
@@ -92,7 +97,7 @@ public final class ClaimIndex {
     }
 
     public int size() {
-        return snapshot.size;
+        return snapshot.byId.size();
     }
 
     private void rebuild() {
@@ -116,7 +121,7 @@ public final class ClaimIndex {
                 }
             }
         }
-        snapshot = new Snapshot(worlds, claimsById.size());
+        snapshot = new Snapshot(worlds, new HashMap<Long, Claim>(claimsById));
     }
 
     private static long chunkKey(int chunkX, int chunkZ) {
@@ -126,15 +131,11 @@ public final class ClaimIndex {
     /** Never mutated after construction, so readers need no locking. */
     private static final class Snapshot {
         private final Map<String, Map<Long, List<Claim>>> worlds;
-        private final int size;
+        private final Map<Long, Claim> byId;
 
-        private Snapshot(Map<String, Map<Long, List<Claim>>> worlds) {
-            this(worlds, 0);
-        }
-
-        private Snapshot(Map<String, Map<Long, List<Claim>>> worlds, int size) {
+        private Snapshot(Map<String, Map<Long, List<Claim>>> worlds, Map<Long, Claim> byId) {
             this.worlds = Collections.unmodifiableMap(worlds);
-            this.size = size;
+            this.byId = Collections.unmodifiableMap(byId);
         }
     }
 }

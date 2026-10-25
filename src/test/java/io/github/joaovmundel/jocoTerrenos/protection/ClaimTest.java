@@ -66,6 +66,24 @@ public class ClaimTest {
         assertFalse(claim.allowsBuild(STRANGER));
     }
 
+    @Test
+    public void aPrivateLandOnlyLetsOwnerAndMembersIn() {
+        Map<String, TerrenoRole> members = new HashMap<String, TerrenoRole>();
+        members.put(MEMBER, TerrenoRole.MEMBER);
+        Claim claim = claim(false, members);
+
+        assertTrue(claim.allowsEntry(OWNER));
+        assertTrue(claim.allowsEntry(MEMBER));
+        assertFalse(claim.allowsEntry(STRANGER));
+    }
+
+    @Test
+    public void aPublicLandLetsEveryoneIn() {
+        Claim claim = claim(true, Collections.<String, TerrenoRole>emptyMap());
+
+        assertTrue(claim.allowsEntry(STRANGER));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void ownerIsRequired() {
         new Claim(1L, null, "world", new Bounds(0, 1, 0, 1), false, true, false, Collections.<String, TerrenoRole>emptyMap());
