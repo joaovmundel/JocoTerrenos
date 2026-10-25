@@ -6,7 +6,7 @@
 #
 # Do not change locale-version. When a newer plugin version ships new texts, this file is kept as
 # en_US.yml.vN.bak and replaced by the new one; copy your changes from the .bak if you want to keep them.
-locale-version: 4
+locale-version: 5
 
 prefix: '&8[&6Lands&8]&r '
 
@@ -26,7 +26,7 @@ help.lines:
   - '&6/terreno info &e[name] &8- &7Show land information'
   - '&6/terreno pvp &e<name> &8- &7Turn &cPvP &7on or off'
   - '&6/terreno mobs &e<name> &8- &7Turn &cmobs &7on or off'
-  - '&6/terreno publico &e<name> &8- &7Open or close the land to &avisitors'
+  - '&6/terreno publico &e<name> &8- &7Make the land &aopen &7or &cprivate &7(visitor entry)'
   - '&6/terreno tp &e<name> &8- &7Teleport to the land'
   - '&6/terreno vender &e<name> <price> &8- &7Put the land &dfor sale'
   - '&6/terreno cancelarvenda &e<name> &8- &7Take the land off the market'
@@ -58,6 +58,7 @@ terreno.comprar.tamanho-invalido-min: '{prefix}&cMinimum size: &e{min}'
 terreno.comprar.tamanho-invalido-max: '{prefix}&cMaximum size: &e{max}'
 terreno.comprar.preco: '{prefix}&7Land price: &6{price}'
 terreno.comprar.sucesso: '{prefix}&aLand purchased successfully!'
+terreno.comprar.dica-publico: '&7Any player can walk in. To close the entrance: &6/terreno publico &e{name}&7.'
 terreno.comprar.info-dono: '&7Owner: &e{player}'
 terreno.comprar.info-terreno: '&7Land: &b{name}'
 terreno.comprar.info-tamanho: '&7Size: &f{size}&7x&f{size}'

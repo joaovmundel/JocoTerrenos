@@ -151,6 +151,17 @@ public class TerrenoServiceCreateTest {
     }
 
     @Test
+    public void aNewLandIsPublicSoAnyoneCanWalkInButNoOneElseBuilds() {
+        Terreno created = service.criarTerreno(playerAt("Joao", world("world"), 100, 200), 10, "Casa");
+
+        assertTrue(created.getPublicAccess());
+        assertTrue(repository.findById(created.getId()).getPublicAccess());
+        assertTrue(index.findAt("world", 100, 200).allowsEntry("maria"));
+        assertFalse(index.findAt("world", 100, 200).allowsBuild("maria"));
+        assertTrue(index.findAt("world", 100, 200).allowsBuild("joao"));
+    }
+
+    @Test
     public void nothingIsBoughtOrChargedInAWorldThatIsNotListed() throws Exception {
         config.set("lands.allowed-worlds", Arrays.asList("world", "plano"));
 

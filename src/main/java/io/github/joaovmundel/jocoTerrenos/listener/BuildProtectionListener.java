@@ -3,7 +3,6 @@ package io.github.joaovmundel.jocoTerrenos.listener;
 import io.github.joaovmundel.jocoTerrenos.protection.Claim;
 import io.github.joaovmundel.jocoTerrenos.protection.ProtectionRules;
 import io.github.joaovmundel.jocoTerrenos.service.ProtectionService;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -83,10 +82,8 @@ public final class BuildProtectionListener implements Listener {
         }
 
         if (action == Action.PHYSICAL) {
-            handlePhysical(event, player, claim, block);
-            return;
-        }
-        if (ProtectionRules.isUsableBlock(block.getType().name()) && protection.canUse(player, claim)) {
+            // trampling farmland, stepping on plates and tripwires: only owner and members trigger things here
+            event.setCancelled(true);
             return;
         }
 
@@ -96,15 +93,6 @@ public final class BuildProtectionListener implements Listener {
             event.setUseItemInHand(Event.Result.DENY);
         }
         protection.notifyDeniedBuild(player, claim);
-    }
-
-    /** Stepping on something: plates and tripwires follow the "use" rule, trampling farmland needs build access. */
-    private void handlePhysical(PlayerInteractEvent event, Player player, Claim claim, Block block) {
-        boolean trampling = block.getType() == Material.SOIL;
-        if (!trampling && protection.canUse(player, claim)) {
-            return;
-        }
-        event.setCancelled(true);
     }
 
     @EventHandler

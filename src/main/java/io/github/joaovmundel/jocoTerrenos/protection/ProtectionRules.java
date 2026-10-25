@@ -10,11 +10,6 @@ import java.util.Set;
  */
 public final class ProtectionRules {
 
-    /** Blocks a visitor may operate on a public land: doors, trapdoors, gates, buttons, levers and plates. */
-    private static final Set<String> USABLE_BLOCKS = new HashSet<String>(Arrays.asList(
-            "WOODEN_DOOR", "IRON_DOOR_BLOCK", "TRAP_DOOR", "FENCE_GATE", "LEVER", "STONE_BUTTON", "WOOD_BUTTON",
-            "STONE_PLATE", "WOOD_PLATE", "GOLD_PLATE", "IRON_PLATE", "TRIPWIRE", "TRIPWIRE_HOOK"));
-
     /** Items whose right click acts on the world beyond the clicked block (liquids, fire, entities, tools). */
     private static final Set<String> RESTRICTED_ITEMS = new HashSet<String>(Arrays.asList(
             "BUCKET", "WATER_BUCKET", "LAVA_BUCKET", "FLINT_AND_STEEL", "FIREBALL", "MONSTER_EGG", "BOAT",
@@ -27,13 +22,6 @@ public final class ProtectionRules {
             "NATURAL", "CHUNK_GEN", "JOCKEY", "VILLAGE_INVASION", "LIGHTNING", "SPAWNER", "DEFAULT"));
 
     private ProtectionRules() {
-    }
-
-    /**
-     * Everything that is not listed (containers, crafting, beds, redstone components...) needs build access.
-     */
-    public static boolean isUsableBlock(String materialName) {
-        return USABLE_BLOCKS.contains(materialName);
     }
 
     public static boolean isRestrictedItem(String materialName) {

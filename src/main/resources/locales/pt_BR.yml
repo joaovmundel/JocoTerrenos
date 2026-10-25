@@ -6,7 +6,7 @@
 #
 # Nao altere locale-version. Quando uma versao nova do plugin trouxer textos novos, este arquivo e guardado
 # como pt_BR.yml.vN.bak e substituido pelo novo; copie suas alteracoes do .bak se quiser mante-las.
-locale-version: 4
+locale-version: 5
 
 prefix: '&8[&6Terrenos&8]&r '
 
@@ -26,7 +26,7 @@ help.lines:
   - '&6/terreno info &e[nome] &8- &7Mostra as informacoes do terreno'
   - '&6/terreno pvp &e<nome> &8- &7Liga ou desliga o &cPvP'
   - '&6/terreno mobs &e<nome> &8- &7Liga ou desliga os &cmobs'
-  - '&6/terreno publico &e<nome> &8- &7Libera ou fecha a &aentrada &7de visitantes'
+  - '&6/terreno publico &e<nome> &8- &7Deixa o terreno &aaberto &7ou &cprivado &7(entrada de visitantes)'
   - '&6/terreno tp &e<nome> &8- &7Teleporta para o terreno'
   - '&6/terreno vender &e<nome> <valor> &8- &7Coloca o terreno &da venda'
   - '&6/terreno cancelarvenda &e<nome> &8- &7Tira o terreno da venda'
@@ -58,6 +58,7 @@ terreno.comprar.tamanho-invalido-min: '{prefix}&cTamanho minimo: &e{min}'
 terreno.comprar.tamanho-invalido-max: '{prefix}&cTamanho maximo: &e{max}'
 terreno.comprar.preco: '{prefix}&7Preco do terreno: &6{price}'
 terreno.comprar.sucesso: '{prefix}&aTerreno comprado com sucesso!'
+terreno.comprar.dica-publico: '&7Qualquer jogador pode entrar nele. Para fechar a entrada: &6/terreno publico &e{name}&7.'
 terreno.comprar.info-dono: '&7Dono: &e{player}'
 terreno.comprar.info-terreno: '&7Terreno: &b{name}'
 terreno.comprar.info-tamanho: '&7Tamanho: &f{size}&7x&f{size}'

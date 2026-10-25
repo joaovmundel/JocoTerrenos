@@ -145,6 +145,9 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         messages.send(player, "terreno.comprar.info-dono", MessageService.placeholders("player", player.getName()));
         messages.send(player, "terreno.comprar.info-terreno", MessageService.placeholders("name", created.getName()));
         messages.send(player, "terreno.comprar.info-tamanho", MessageService.placeholders("size", tamanho));
+        if (created.getPublicAccess()) {
+            messages.send(player, "terreno.comprar.dica-publico", MessageService.placeholders("name", created.getName()));
+        }
         return true;
     }
 

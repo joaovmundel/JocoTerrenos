@@ -80,7 +80,7 @@ public class TerrenoServiceSaleTest {
         terreno.setSize(10);
         terreno.setPvp(false);
         terreno.setMobs(true);
-        terreno.setPublicAccess(true);
+        terreno.setPublicAccess(false);
         Terreno created = repository.create(terreno);
         assertNotNull(created);
         service.reloadClaims();
@@ -254,7 +254,7 @@ public class TerrenoServiceSaleTest {
         Terreno stored = repository.findById(casa.getId());
         assertEquals("maria", stored.getDonoNome());
         assertNull("no longer for sale", stored.getSalePrice());
-        assertFalse("the new owner starts private", stored.getPublicAccess());
+        assertEquals("the land starts like any new one", TerrenoService.DEFAULT_PUBLIC_ACCESS, stored.getPublicAccess());
         assertTrue("the old owner's members do not follow the land", stored.getMembers().isEmpty());
 
         Claim claim = index.findById(casa.getId());

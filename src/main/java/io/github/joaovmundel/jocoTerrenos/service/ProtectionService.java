@@ -65,11 +65,6 @@ public final class ProtectionService {
         return claim == null || claim.allowsBuild(PlayerKeys.of(player)) || hasBypass(player);
     }
 
-    /** @param claim the land, or {@code null} for unclaimed ground (always allowed) */
-    public boolean canUse(Player player, Claim claim) {
-        return claim == null || claim.allowsUse(PlayerKeys.of(player)) || hasBypass(player);
-    }
-
     /**
      * @return {@code true} when the player may not build at the block, after telling them so; the caller
      * only has to cancel its event

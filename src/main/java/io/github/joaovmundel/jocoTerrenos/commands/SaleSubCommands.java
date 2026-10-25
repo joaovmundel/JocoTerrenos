@@ -181,7 +181,7 @@ final class SaleSubCommands {
             messages.send(seller, "terreno.adquirir.aviso-vendedor", MessageService.placeholders(
                     "buyer", buyer.getName(), "name", terreno.getName(), "price", preco));
         }
-        // the land is private again and the old owner and members are strangers now: nobody is left stuck inside
+        // the old owner and members are strangers now: if new lands start private, nobody is left stuck inside
         plugin.getProtectionService().expelIntruders(terreno.getId());
     }
 

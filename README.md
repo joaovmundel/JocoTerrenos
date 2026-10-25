@@ -89,11 +89,13 @@ borda também não afetam o terreno.
 
 - **PvP**: desligado, ninguém causa dano em jogadores quando atacante ou vítima está no terreno.
 - **Mobs**: desligado, monstros não nascem no terreno (ovos de spawn e comandos continuam funcionando).
-- **Entrada** (`/terreno publico`): terreno privado (o padrão) só deixa entrar o dono e os membros. Quem tenta andar,
-  navegar ou se teleportar para dentro é barrado; um teleporte para dentro (`/home`, `/back`, ender pearl) vira o ponto
-  mais próximo logo fora da borda. Quem já está dentro quando o terreno fecha, ou que marcou uma home antes dele ficar
-  privado, é levado para fora em vez de ficar preso. Terreno público libera a entrada e também portas, alçapões,
-  portões, botões, alavancas e placas de pressão, mas ninguém de fora constrói nem abre baús.
+- **Entrada** (`/terreno publico`): todo terreno novo nasce **público**, e qualquer um pode entrar. O dono o deixa
+  **privado** com `/terreno publico <nome>` (de novo para reabrir). Num terreno privado só entram o dono e os membros:
+  quem tenta andar, navegar ou se teleportar para dentro é barrado; um teleporte para dentro (`/home`, `/back`, ender
+  pearl) vira o ponto mais próximo logo fora da borda. Quem já está dentro quando o terreno fecha, ou que marcou uma
+  home antes dele ficar privado, é levado para fora em vez de ficar preso.
+- Público libera **só a entrada**. Construir, quebrar, abrir baús e usar portas, alçapões, portões, botões, alavancas e
+  placas de pressão continua só para o dono e os membros, em qualquer terreno.
 - **Terreno à venda** pode ser visitado por qualquer um (para quem quer comprar conhecer), sem poder construir.
 - Quem tem `jocoterrenos.bypass` (OP por padrão) ignora tudo isso: para testar a proteção, use um jogador sem OP.
 - **Membros** (papéis `OWNER`, `ADMIN`, `MEMBER`) constroem como o dono. Ainda não há comando para adicionar membros.
@@ -103,7 +105,7 @@ borda também não afetam o terreno.
 ## Venda de terrenos
 - O preço é um valor positivo com até 2 casas decimais, no máximo `lands.sale.max-price` (padrão 1000000000).
 - Na compra, o dinheiro vai do comprador para o dono (mesmo offline). O terreno muda de dono, deixa de estar à venda,
-  volta a ser privado e perde os membros do antigo dono. Se o comprador já tem um terreno com o mesmo nome, o novo
+  volta ao padrão de um terreno novo (público) e perde os membros do antigo dono. Se o comprador já tem um terreno com o mesmo nome, o novo
   ganha um número (`Casa` vira `Casa2`).
 - Se algum passo falha, os anteriores são desfeitos (o dinheiro volta). Falhas que não puderem ser desfeitas vão para o
   log como `SEVERE` com os valores.

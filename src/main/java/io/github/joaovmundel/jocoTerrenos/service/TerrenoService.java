@@ -32,6 +32,9 @@ public class TerrenoService {
     /** Longest name a player may give a land. */
     public static final int MAX_NAME_LENGTH = 15;
 
+    /** A land starts open to visitors; its owner closes it with {@code /terreno publico}. */
+    public static final boolean DEFAULT_PUBLIC_ACCESS = true;
+
     private static final String DEFAULT_MAX_SALE_PRICE = "1000000000";
     private static final int MAX_NAME_SUFFIX = 99;
 
@@ -135,7 +138,7 @@ public class TerrenoService {
         terreno.setSize(tamanho);
         terreno.setPvp(false);
         terreno.setMobs(true);
-        terreno.setPublicAccess(false);
+        terreno.setPublicAccess(DEFAULT_PUBLIC_ACCESS);
         Terreno created = repository.create(terreno);
         if (created == null) {
             // Reembolso em caso de falha
@@ -367,7 +370,8 @@ public class TerrenoService {
 
     /**
      * Buys a land another player put up for sale. The buyer pays the asking price to the seller, the land changes
-     * hands with its members removed and becomes private, and it is no longer for sale. If the buyer already has a
+     * hands with its members removed and starts open to visitors like any new land, and it is no longer for sale.
+     * If the buyer already has a
      * land with the same name the new one gets a number appended.
      * <p>
      * Money and storage cannot be one transaction, so every step that fails undoes the ones before it.
@@ -409,7 +413,7 @@ public class TerrenoService {
         terreno.setDonoNome(compradorKey);
         terreno.setName(novoNome);
         terreno.setSalePrice(null);
-        terreno.setPublicAccess(false);
+        terreno.setPublicAccess(DEFAULT_PUBLIC_ACCESS);
         if (!repository.transferOwnership(terreno)) {
             boolean recuperado = economy.withdraw(vendedor, valor);
             boolean devolvido = economy.deposit(comprador.getName(), valor);

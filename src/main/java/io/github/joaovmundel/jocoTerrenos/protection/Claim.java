@@ -38,17 +38,15 @@ public final class Claim {
         this.members =Collections.unmodifiableMap(new HashMap<String, TerrenoRole>(members));
     }
 
-    /** Owner, ADMIN and MEMBER may build, break and open containers. */
+    /**
+     * Owner, ADMIN and MEMBER may build, break, open containers and use doors, buttons and levers. Nobody else
+     * may, however public the land is: public only decides who can come in.
+     */
     public boolean allowsBuild(String playerKey) {
         if (ownerKey.equals(playerKey)) {
             return true;
         }
         return members.containsKey(playerKey);
-    }
-
-    /** Everyone who can build, plus visitors when the land is public (doors, buttons, levers, gates). */
-    public boolean allowsUse(String playerKey) {
-        return publicAccess || allowsBuild(playerKey);
     }
 
     /**

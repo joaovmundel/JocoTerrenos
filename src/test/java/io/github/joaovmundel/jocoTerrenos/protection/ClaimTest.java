@@ -21,27 +21,25 @@ public class ClaimTest {
     }
 
     @Test
-    public void ownerCanBuildAndUse() {
+    public void ownerCanBuild() {
         Claim claim = claim(false, Collections.<String, TerrenoRole>emptyMap());
 
         assertTrue(claim.allowsBuild(OWNER));
-        assertTrue(claim.allowsUse(OWNER));
     }
 
     @Test
-    public void strangerCanDoNothingOnPrivateLand() {
+    public void strangerCannotBuildOnPrivateLand() {
         Claim claim = claim(false, Collections.<String, TerrenoRole>emptyMap());
 
         assertFalse(claim.allowsBuild(STRANGER));
-        assertFalse(claim.allowsUse(STRANGER));
     }
 
     @Test
-    public void publicLandLetsVisitorsUseButNotBuild() {
+    public void publicOnlyOpensTheDoorToWalkIn() {
         Claim claim = claim(true, Collections.<String, TerrenoRole>emptyMap());
 
-        assertFalse(claim.allowsBuild(STRANGER));
-        assertTrue(claim.allowsUse(STRANGER));
+        assertTrue(claim.allowsEntry(STRANGER));
+        assertFalse("public does not let visitors build, open chests or use doors", claim.allowsBuild(STRANGER));
     }
 
     @Test
@@ -92,7 +90,6 @@ public class ClaimTest {
         assertTrue(forSale.isForSale());
         assertTrue(forSale.allowsEntry(STRANGER));
         assertFalse(forSale.allowsBuild(STRANGER));
-        assertFalse(forSale.allowsUse(STRANGER));
     }
 
     @Test(expected = IllegalArgumentException.class)
