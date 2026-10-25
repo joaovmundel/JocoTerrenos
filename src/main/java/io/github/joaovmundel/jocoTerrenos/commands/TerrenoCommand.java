@@ -216,7 +216,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         }
 
         try {
-            String name = args[1];
+            String name = joinArgs(args, 1);
             String playerUUID = player.getUniqueId().toString();
             Terreno terreno = terrenoService.buscarTerrenoPorNome(playerUUID, name);
 
@@ -246,7 +246,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        return toggleSetting(player, args[1], "pvp");
+        return toggleSetting(player, joinArgs(args, 1), "pvp");
     }
 
     private boolean handleToggleMobs(Player player, String[] args) {
@@ -255,7 +255,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        return toggleSetting(player, args[1], "mobs");
+        return toggleSetting(player, joinArgs(args, 1), "mobs");
     }
 
     private boolean handleTogglePublico(Player player, String[] args) {
@@ -264,7 +264,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        return toggleSetting(player, args[1], "publico");
+        return toggleSetting(player, joinArgs(args, 1), "publico");
     }
 
     private boolean toggleSetting(Player player, String nome, String setting) {
@@ -323,7 +323,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         try {
-            String name = args[1];
+            String name = joinArgs(args, 1);
             String playerUUID = player.getUniqueId().toString();
 
             if (!(terrenoService.isDono(name, playerUUID))) {
