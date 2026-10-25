@@ -8,6 +8,7 @@ import io.github.joaovmundel.jocoTerrenos.database.DatabaseManager;
 import io.github.joaovmundel.jocoTerrenos.economy.EconomyGateway;
 import io.github.joaovmundel.jocoTerrenos.economy.VaultEconomyGateway;
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
+import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import io.github.joaovmundel.jocoTerrenos.listener.BuildProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EntityProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EnvironmentProtectionListener;
@@ -39,6 +40,7 @@ public final class JocoTerrenos extends JavaPlugin {
     public void onEnable() {
         // Salva a configuração padrão se não existir
         saveDefaultConfig();
+        JocoLogging.setDebugEnabled(getConfig().getBoolean("debug", false));
 
         // Inicializa MessageService e arquivos de idioma
         messageService = new MessageService(this);

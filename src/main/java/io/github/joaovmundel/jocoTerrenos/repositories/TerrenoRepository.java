@@ -73,7 +73,7 @@ public class TerrenoRepository {
                     try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             terreno.setId(generatedKeys.getLong(1));
-                            logger.info("Terreno criado com ID: " + terreno.getId());
+                            logger.fine("Terreno criado com ID: " + terreno.getId());
                             return terreno;
                         }
                     }
@@ -213,7 +213,7 @@ public class TerrenoRepository {
                 stmt.setLong(10, terreno.getId());
 
                 if (stmt.executeUpdate() > 0) {
-                    logger.info("Terreno atualizado: " + terreno.getId());
+                    logger.fine("Terreno atualizado: " + terreno.getId());
                     return true;
                 }
             }
@@ -232,7 +232,7 @@ public class TerrenoRepository {
             try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM terrenos WHERE id = ?")) {
                 stmt.setLong(1, id);
                 if (stmt.executeUpdate() > 0) {
-                    logger.info("Terreno deletado: " + id);
+                    logger.fine("Terreno deletado: " + id);
                     return true;
                 }
             }
@@ -255,7 +255,7 @@ public class TerrenoRepository {
                 stmt.setString(3, role.name());
                 stmt.setLong(4, System.currentTimeMillis());
                 if (stmt.executeUpdate() > 0) {
-                    logger.info("Membro adicionado ao terreno " + terrenoId + ": " + memberNome);
+                    logger.fine("Membro adicionado ao terreno " + terrenoId + ": " + memberNome);
                     return true;
                 }
             }
@@ -276,7 +276,7 @@ public class TerrenoRepository {
                 stmt.setLong(1, terrenoId);
                 stmt.setString(2, memberNome);
                 if (stmt.executeUpdate() > 0) {
-                    logger.info("Membro removido do terreno " + terrenoId + ": " + memberNome);
+                    logger.fine("Membro removido do terreno " + terrenoId + ": " + memberNome);
                     return true;
                 }
             }
@@ -298,7 +298,7 @@ public class TerrenoRepository {
                 stmt.setLong(2, terrenoId);
                 stmt.setString(3, memberNome);
                 if (stmt.executeUpdate() > 0) {
-                    logger.info("Papel do membro atualizado no terreno " + terrenoId + ": " + memberNome + " -> " + newRole);
+                    logger.fine("Papel do membro atualizado no terreno " + terrenoId + ": " + memberNome + " -> " + newRole);
                     return true;
                 }
             }

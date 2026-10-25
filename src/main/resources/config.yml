@@ -3,6 +3,9 @@
 # Active language for messages (e.g., pt_BR, en_US)
 language: pt_BR
 
+# Prints extra diagnostic lines (fences placed, etc.) to the console. Leave false in production.
+debug: false
+
 # Database Settings
 # The SQLite and MySQL drivers come bundled with the server (CraftBukkit/Spigot 1.5.2);
 # PostgreSQL is not supported on this version.

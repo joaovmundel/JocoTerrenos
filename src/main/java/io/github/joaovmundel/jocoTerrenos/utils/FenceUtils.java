@@ -50,9 +50,7 @@ public class FenceUtils {
         // Usa a função auxiliar para colocar as cercas
         int fencesPlaced = colocarCercasPerimetro(world, centerX, centerZ, lado);
 
-        logger.info("Cercas colocadas com sucesso!");
-        logger.info("§7Área: " + lado + "x" + lado + " blocos (" + (lado * lado) + "m²)");
-        logger.info("§7Total de cercas colocadas: " + fencesPlaced);
+        logger.debug(player.getName() + " cercou " + lado + "x" + lado + " blocos com " + fencesPlaced + " cercas");
     }
 
     /**

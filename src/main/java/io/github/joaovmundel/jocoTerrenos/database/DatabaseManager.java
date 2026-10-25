@@ -45,7 +45,7 @@ public class DatabaseManager {
             throw new StorageException("Não foi possível abrir o banco de dados " + dialect, e);
         }
         this.provider = candidate;
-        logger.info("Banco de dados " + dialect + " pronto.");
+        logger.fine("Banco de dados " + dialect + " pronto.");
     }
 
     private Schema.Dialect readDialect() {
@@ -95,7 +95,7 @@ public class DatabaseManager {
         if (provider != null) {
             provider.close();
             provider = null;
-            logger.info("Conexão com o banco de dados fechada com sucesso!");
+            logger.fine("Conexão com o banco de dados fechada com sucesso!");
         }
     }
 }
