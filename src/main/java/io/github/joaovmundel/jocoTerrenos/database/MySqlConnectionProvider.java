@@ -43,7 +43,7 @@ public final class MySqlConnectionProvider extends AbstractConnectionProvider {
                 + "?useUnicode=true&characterEncoding=UTF-8&connectTimeout=" + CONNECT_TIMEOUT_MS
                 + "&socketTimeout=" + SOCKET_TIMEOUT_MS;
         Connection connection = DriverManager.getConnection(url, username, password);
-        logger.fine("Conexao com o MySQL estabelecida (" + host + ":" + port + "/" + database + ").");
+        debug.debug("Conexao com o MySQL estabelecida (" + host + ":" + port + "/" + database + ").");
         return connection;
     }
 

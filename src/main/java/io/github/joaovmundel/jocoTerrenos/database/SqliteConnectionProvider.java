@@ -33,7 +33,7 @@ public final class SqliteConnectionProvider extends AbstractConnectionProvider {
 
         Connection connection = DriverManager.getConnection("jdbc:sqlite:" + file.getPath().replace('\\', '/'));
         enableForeignKeys(connection);
-        logger.fine("Banco de dados SQLite aberto: " + file.getName());
+        debug.debug("Banco de dados SQLite aberto: " + file.getName());
         return connection;
     }
 

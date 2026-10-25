@@ -1,5 +1,7 @@
 package io.github.joaovmundel.jocoTerrenos.database;
 
+import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -12,6 +14,8 @@ import java.util.logging.Logger;
 abstract class AbstractConnectionProvider implements ConnectionProvider {
 
     protected final Logger logger;
+    /** Diagnostic lines that only appear with {@code debug: true}. */
+    protected final JocoLogging debug = new JocoLogging(getClass().getName());
     private Connection connection;
 
     protected AbstractConnectionProvider(Logger logger) {

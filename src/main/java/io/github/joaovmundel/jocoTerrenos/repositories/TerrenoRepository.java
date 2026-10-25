@@ -3,6 +3,7 @@ package io.github.joaovmundel.jocoTerrenos.repositories;
 import io.github.joaovmundel.jocoTerrenos.database.ConnectionProvider;
 import io.github.joaovmundel.jocoTerrenos.economy.SalePrice;
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
+import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoMember;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoRole;
@@ -44,6 +45,7 @@ public class TerrenoRepository {
 
     private final ConnectionProvider connections;
     private final Logger logger;
+    private final JocoLogging debug = new JocoLogging(TerrenoRepository.class.getName());
 
     public TerrenoRepository(ConnectionProvider connections, Logger logger) {
         this.connections = connections;
@@ -83,7 +85,7 @@ public class TerrenoRepository {
                     try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             terreno.setId(generatedKeys.getLong(1));
-                            logger.fine("Terreno criado com ID: " + terreno.getId());
+                            debug.debug("Terreno criado com ID: " + terreno.getId());
                             return terreno;
                         }
                     }
@@ -208,7 +210,7 @@ public class TerrenoRepository {
     public boolean update(Terreno terreno) {
         try {
             if (updateRow(connections.get(), terreno)) {
-                logger.fine("Terreno atualizado: " + terreno.getId());
+                debug.debug("Terreno atualizado: " + terreno.getId());
                 return true;
             }
         } catch (SQLException e) {
@@ -261,7 +263,7 @@ public class TerrenoRepository {
                 }
                 connection.commit();
                 terreno.getMembers().clear();
-                logger.fine("Terreno transferido: " + terreno.getId() + " -> " + terreno.getDonoNome());
+                debug.debug("Terreno transferido: " + terreno.getId() + " -> " + terreno.getDonoNome());
                 return true;
             }
             connection.rollback();
@@ -332,7 +334,7 @@ public class TerrenoRepository {
             try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM terrenos WHERE id = ?")) {
                 stmt.setLong(1, id);
                 if (stmt.executeUpdate() > 0) {
-                    logger.fine("Terreno deletado: " + id);
+                    debug.debug("Terreno deletado: " + id);
                     return true;
                 }
             }
@@ -355,7 +357,7 @@ public class TerrenoRepository {
                 stmt.setString(3, role.name());
                 stmt.setLong(4, System.currentTimeMillis());
                 if (stmt.executeUpdate() > 0) {
-                    logger.fine("Membro adicionado ao terreno " + terrenoId + ": " + memberNome);
+                    debug.debug("Membro adicionado ao terreno " + terrenoId + ": " + memberNome);
                     return true;
                 }
             }
@@ -376,7 +378,7 @@ public class TerrenoRepository {
                 stmt.setLong(1, terrenoId);
                 stmt.setString(2, memberNome);
                 if (stmt.executeUpdate() > 0) {
-                    logger.fine("Membro removido do terreno " + terrenoId + ": " + memberNome);
+                    debug.debug("Membro removido do terreno " + terrenoId + ": " + memberNome);
                     return true;
                 }
             }
@@ -398,7 +400,7 @@ public class TerrenoRepository {
                 stmt.setLong(2, terrenoId);
                 stmt.setString(3, memberNome);
                 if (stmt.executeUpdate() > 0) {
-                    logger.fine("Papel do membro atualizado no terreno " + terrenoId + ": " + memberNome + " -> " + newRole);
+                    debug.debug("Papel do membro atualizado no terreno " + terrenoId + ": " + memberNome + " -> " + newRole);
                     return true;
                 }
             }

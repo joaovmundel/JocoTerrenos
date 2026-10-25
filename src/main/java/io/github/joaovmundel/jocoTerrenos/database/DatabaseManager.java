@@ -1,6 +1,7 @@
 package io.github.joaovmundel.jocoTerrenos.database;
 
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
+import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
@@ -22,6 +23,7 @@ public class DatabaseManager {
     private final Plugin plugin;
     private final FileConfiguration config;
     private final Logger logger;
+    private final JocoLogging debug = new JocoLogging(DatabaseManager.class.getName());
     private ConnectionProvider provider;
 
     public DatabaseManager(Plugin plugin) {
@@ -45,7 +47,7 @@ public class DatabaseManager {
             throw new StorageException("Nao foi possivel abrir o banco de dados " + dialect, e);
         }
         this.provider = candidate;
-        logger.fine("Banco de dados " + dialect + " pronto.");
+        debug.debug("Banco de dados " + dialect + " pronto.");
     }
 
     private Schema.Dialect readDialect() {
@@ -95,7 +97,7 @@ public class DatabaseManager {
         if (provider != null) {
             provider.close();
             provider = null;
-            logger.fine("Conexao com o banco de dados fechada com sucesso!");
+            debug.debug("Conexao com o banco de dados fechada com sucesso!");
         }
     }
 }
