@@ -6,7 +6,7 @@
 #
 # Do not change locale-version. When a newer plugin version ships new texts, this file is kept as
 # en_US.yml.vN.bak and replaced by the new one; copy your changes from the .bak if you want to keep them.
-locale-version: 5
+locale-version: 6
 
 prefix: '&8[&6Lands&8]&r '
 
@@ -148,6 +148,16 @@ terreno.vendas.vazio: '{prefix}&7No land is for sale right now.'
 terreno.vendas.titulo: '&8----- &6&lLands for sale &8-----'
 terreno.vendas.linha: '&8#&7{id} &b{name} &8| &e{owner} &8| &f{size}&7x&f{size} &8| &6{price} &8| &7{where}'
 terreno.vendas.rodape: '&7Buy with &6/terreno adquirir &e<owner> <name>&7, or from inside the land with &6/terreno adquirir&7.'
+
+# Fly
+fly.enabled: '{prefix}&aFly mode on! &7It turns off if you leave your land.'
+fly.disabled: '{prefix}&7Fly mode &coff&7.'
+fly.world: '{prefix}&c&6/voar &conly works in the worlds where lands can be bought: &e{worlds}&c.'
+fly.not-in-own-land: '{prefix}&cYou can only fly inside a land you own or are a member of.'
+fly.creative: '{prefix}&7You can already fly in creative mode.'
+fly.off-left-land: '{prefix}&eFly mode off: you left your land.'
+fly.off-world: '{prefix}&eFly mode off: this world does not allow flying.'
+fly.off-permission: '{prefix}&eFly mode off: you no longer have permission.'
 
 # Protection
 protection.denied: '{prefix}&cThis land belongs to &e{owner}&c. You cannot do that here.'

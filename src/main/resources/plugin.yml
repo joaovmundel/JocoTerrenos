@@ -26,8 +26,16 @@ commands:
     usage: /terreno <comprar|preco|listar|info|deletar|pvp|mobs|publico|tp|vender|cancelarvenda|adquirir|vendas>
     permission: jocoterrenos.terreno
     permission-message: Voce nao tem permissao para usar este comando!
+  voar:
+    description: Liga ou desliga o voo dentro dos seus terrenos
+    usage: /voar
+    permission: jocoterrenos.voar
+    permission-message: Voce nao tem permissao para usar este comando!
 
 permissions:
+  jocoterrenos.voar:
+    description: Permite usar /voar (voar dentro dos proprios terrenos, nos mundos onde se pode comprar terrenos)
+    default: op
   jocoterrenos.terreno:
     description: Permite usar o comando /terreno (comprar e gerenciar os proprios terrenos)
     default: true

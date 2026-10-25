@@ -250,6 +250,22 @@ public class TerrenoRepositoryTest {
     }
 
     @Test
+    public void flyingPlayersAreRecordedAndForgotten() {
+        assertTrue(repository.loadFlyingPlayers().isEmpty());
+
+        assertTrue(repository.markFlying("joao"));
+        assertTrue("marking twice is harmless", repository.markFlying("joao"));
+        assertTrue(repository.markFlying("maria"));
+
+        assertEquals(2, repository.loadFlyingPlayers().size());
+        assertTrue(repository.loadFlyingPlayers().contains("joao"));
+
+        assertTrue(repository.unmarkFlying("joao"));
+        assertFalse("nothing left to remove", repository.unmarkFlying("joao"));
+        assertEquals(1, repository.loadFlyingPlayers().size());
+    }
+
+    @Test
     public void providerReconnectsAfterTheConnectionWasClosed() throws Exception {
         repository.create(terreno("joao", "Casa"));
 

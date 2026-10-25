@@ -90,6 +90,7 @@ public final class Schema {
                 + "FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE, "
                 + "UNIQUE (terreno_id, member_nome))");
         statement.execute("CREATE INDEX IF NOT EXISTS idx_member_nome ON terreno_members(member_nome)");
+        statement.execute("CREATE TABLE IF NOT EXISTS flying_players (player_nome VARCHAR(32) NOT NULL PRIMARY KEY)");
     }
 
     private static void createMySql(Statement statement) throws SQLException {
@@ -118,6 +119,9 @@ public final class Schema {
                 + "FOREIGN KEY (terreno_id) REFERENCES terrenos(id) ON DELETE CASCADE, "
                 + "UNIQUE KEY unique_member (terreno_id, member_nome), "
                 + "INDEX idx_member_nome (member_nome)"
+                + ") ENGINE=InnoDB DEFAULT CHARSET=utf8");
+        statement.execute("CREATE TABLE IF NOT EXISTS flying_players ("
+                + "player_nome VARCHAR(32) NOT NULL PRIMARY KEY"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8");
     }
 }

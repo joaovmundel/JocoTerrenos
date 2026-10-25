@@ -12,6 +12,8 @@ local, compra um terreno quadrado com `/terreno comprar`, o plugin cobra pelo Va
 - Proteção dos terrenos (construir, quebrar, abrir baús, balde, fogo, explosões, líquidos, pistões, PvP e mobs)
 - Terrenos privados: só o dono e os membros entram; quem ficou preso dentro é levado para a borda de fora
 - Venda de terrenos entre jogadores (`/terreno vender`, `/terreno adquirir`)
+- `/voar`: voo dentro dos próprios terrenos, para quem tem a permissão
+- Lista de mundos onde se pode comprar terrenos (`lands.allowed-worlds`)
 - Persistência em SQLite (padrão) ou MySQL, com os drivers que o próprio servidor já traz
 
 ## Diferenças em relação à `main` (1.21)
@@ -82,6 +84,9 @@ Terrenos (`/terreno`):
 
 Nomes de terreno podem ter mais de uma palavra (até 15 caracteres).
 
+Voo:
+- `/voar` — Liga ou desliga o voo (permissão `jocoterrenos.voar`)
+
 ## Proteção
 Quem não é dono nem membro do terreno não consegue construir, quebrar, abrir baús, usar baldes, acender fogo nem
 mexer em animais, molduras e quadros dentro dele. Explosões, fogo, líquidos vindos de fora e pistões que atravessam a
@@ -102,6 +107,24 @@ borda também não afetam o terreno.
 - A área protegida é o anel das cercas: para tamanhos pares ela tem uma linha de blocos a mais que o tamanho comprado.
 - Limites conhecidos: dispensers, funis, poções arremessadas e crescimento de árvores não são tratados.
 
+## Mundos permitidos
+`lands.allowed-worlds` no `config.yml` lista os mundos onde se pode **comprar terrenos** e onde o `/voar` funciona
+(nomes sem diferenciar maiúsculas). Lista vazia ou ausente libera todos os mundos, então um `config.yml` antigo
+continua funcionando como antes; o `config.yml` embutido vem com `world`. Terrenos que já existem em outros mundos
+continuam protegidos.
+
+## Voar
+- Só dá para ligar o `/voar` com a permissão `jocoterrenos.voar` (padrão OP), em um dos mundos permitidos e **dentro de
+  um terreno seu ou do qual você é membro**. Quem tem a permissão mas está num terreno de outra pessoa, mesmo
+  público, ou fora de qualquer terreno, não consegue.
+- O voo desliga na hora, com aviso, se o jogador sair do terreno, se teletransportar para fora dele ou para outro
+  mundo, perder a permissão, morrer ou mudar de modo de jogo. Passar de um terreno seu para outro, seu também, não
+  desliga. Se o terreno for deletado ou vendido, o voo de quem estava nele desliga.
+- Ao ser desligado no ar, a próxima queda não causa dano (vale por 10 segundos e uma vez).
+- O plugin só mexe no voo de quem ligou pelo `/voar`: o `/fly` do Essentials e o modo criativo não são afetados.
+- A 1.5.2 grava "pode voar" no arquivo do jogador. Por isso quem está voando fica registrado no banco, e se o servidor
+  cair o voo é desfeito no próximo login.
+
 ## Venda de terrenos
 - O preço é um valor positivo com até 2 casas decimais, no máximo `lands.sale.max-price` (padrão 1000000000).
 - Na compra, o dinheiro vai do comprador para o dono (mesmo offline). O terreno muda de dono, deixa de estar à venda,
@@ -115,6 +138,7 @@ borda também não afetam o terreno.
 | Permissão | Padrão | Efeito |
 |---|---|---|
 | `jocoterrenos.terreno` | todos | Usar `/terreno` (comprar e gerenciar os próprios terrenos) |
+| `jocoterrenos.voar` | OP | Usar `/voar` dentro dos próprios terrenos |
 | `jocoterrenos.bypass` | OP | Ignorar a proteção de qualquer terreno |
 | `jocoterrenos.cercar`, `jocoterrenos.resizecerca`, `jocoterrenos.removercerca` | OP | Comandos de teste de cercas, que mexem no mundo em qualquer lugar |
 | `jocoterrenos.admin` | OP | Todas as permissões administrativas acima |
@@ -125,6 +149,9 @@ Tabela `terrenos`: `id`, `dono_nome` (minúsculas), `name`, `db_name_key` (dono+
 
 Tabela `terreno_members`: `id`, `terreno_id` (FK com `ON DELETE CASCADE`), `member_nome`, `member_role`
 (`OWNER`, `ADMIN`, `MEMBER`), `added_at`. Não há migração a partir do banco da `main` (que usa UUID).
+
+Tabela `flying_players`: `player_nome` de quem está com o `/voar` ligado (apagado ao desligar; serve para recuperar o
+estado depois de uma queda do servidor).
 
 ## Como construir
 Pré-requisitos: JDK 9+ (compila com `--release 8`) e Maven. Não precisa do servidor.

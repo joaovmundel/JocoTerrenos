@@ -15,10 +15,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -443,6 +445,67 @@ public class TerrenoRepository {
             logger.log(Level.SEVERE, "Erro ao verificar existencia de nome: " + nome + " para dono: " + donoNome, e);
         }
         return false;
+    }
+
+    /**
+     * Registers that the player turned {@code /voar} on. The 1.5.2 server saves the "may fly" flag in the player
+     * file, so after a crash the flag would outlive the session; this record lets the next login undo it.
+     *
+     * @param playerNome lowercase player name
+     */
+    public boolean markFlying(String playerNome) {
+        try {
+            Connection connection = connections.get();
+            if (isFlyingMarked(connection, playerNome)) {
+                return true;
+            }
+            try (PreparedStatement stmt = connection.prepareStatement("INSERT INTO flying_players (player_nome) VALUES (?)")) {
+                stmt.setString(1, playerNome);
+                return stmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao registrar voo ativo de " + playerNome, e);
+            return false;
+        }
+    }
+
+    private boolean isFlyingMarked(Connection connection, String playerNome) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(1) FROM flying_players WHERE player_nome = ?")) {
+            stmt.setString(1, playerNome);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    public boolean unmarkFlying(String playerNome) {
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM flying_players WHERE player_nome = ?")) {
+                stmt.setString(1, playerNome);
+                return stmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao limpar voo ativo de " + playerNome, e);
+            return false;
+        }
+    }
+
+    /** @return the players recorded as flying, lowercase; empty if the table cannot be read (logged) */
+    public Set<String> loadFlyingPlayers() {
+        Set<String> names = new HashSet<String>();
+        try {
+            Connection connection = connections.get();
+            try (Statement stmt = connection.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT player_nome FROM flying_players")) {
+                while (rs.next()) {
+                    names.add(rs.getString(1));
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao ler os voos ativos", e);
+        }
+        return names;
     }
 
     private Terreno mapResultSetToTerreno(ResultSet rs) throws SQLException {

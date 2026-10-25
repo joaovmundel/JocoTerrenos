@@ -20,7 +20,7 @@ public class ListenerRegistrationTest {
 
     private static final Class<?>[] LISTENERS = {
             BuildProtectionListener.class, EntityProtectionListener.class, EnvironmentProtectionListener.class,
-            EntryProtectionListener.class};
+            EntryProtectionListener.class, FlightListener.class};
 
     @Test
     public void everyHandlerTakesOneRegistrableEvent() {
@@ -39,7 +39,7 @@ public class ListenerRegistrationTest {
                 assertTrue(where + ": " + event.getSimpleName() + " has no getHandlerList()", hasHandlerList(event));
             }
         }
-        assertTrue("no handlers found, the test is broken", handlers >= 19);
+        assertTrue("no handlers found, the test is broken", handlers >= 27);
     }
 
     /** Same walk as JavaPluginLoader#getRegistrationClass in CraftBukkit 1.5.2. */

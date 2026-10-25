@@ -237,6 +237,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 if (loc != null) {
                     FenceUtils.removerCercas(loc, terreno.getSize());
                 }
+                plugin.getFlightService().revalidateAll();
                 messages.send(player, "terreno.deletar.sucesso");
             } else {
                 messages.send(player, "terreno.deletar.erro");

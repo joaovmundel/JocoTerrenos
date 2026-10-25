@@ -4,6 +4,7 @@ import io.github.joaovmundel.jocoTerrenos.commands.CercarCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.RemoverCercaCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.ResizeCercaCommand;
 import io.github.joaovmundel.jocoTerrenos.commands.TerrenoCommand;
+import io.github.joaovmundel.jocoTerrenos.commands.VoarCommand;
 import io.github.joaovmundel.jocoTerrenos.database.DatabaseManager;
 import io.github.joaovmundel.jocoTerrenos.economy.EconomyGateway;
 import io.github.joaovmundel.jocoTerrenos.economy.VaultEconomyGateway;
@@ -13,8 +14,10 @@ import io.github.joaovmundel.jocoTerrenos.listener.BuildProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EntityProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EntryProtectionListener;
 import io.github.joaovmundel.jocoTerrenos.listener.EnvironmentProtectionListener;
+import io.github.joaovmundel.jocoTerrenos.listener.FlightListener;
 import io.github.joaovmundel.jocoTerrenos.protection.ClaimIndex;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
+import io.github.joaovmundel.jocoTerrenos.service.FlightService;
 import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.service.ProtectionService;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
@@ -35,6 +38,7 @@ public final class JocoTerrenos extends JavaPlugin {
     private TerrenoService terrenoService;
     private ClaimIndex claimIndex;
     private ProtectionService protectionService;
+    private FlightService flightService;
     private MessageService messageService;
 
     @Override
@@ -74,6 +78,8 @@ public final class JocoTerrenos extends JavaPlugin {
 
         protectionService = new ProtectionService(claimIndex, messageService,
                 getConfig().getLong("protection.message-cooldown-ms", DEFAULT_MESSAGE_COOLDOWN_MILLIS));
+        flightService = new FlightService(protectionService, terrenoService, terrenoRepository, messageService);
+        flightService.loadStaleFlyers();
         registerProtectionListeners();
 
         // Registra os comandos
@@ -83,6 +89,7 @@ public final class JocoTerrenos extends JavaPlugin {
         TerrenoCommand terrenoCmd = new TerrenoCommand(this);
         Objects.requireNonNull(getCommand("terreno")).setExecutor(terrenoCmd);
         Objects.requireNonNull(getCommand("terreno")).setTabCompleter(terrenoCmd);
+        Objects.requireNonNull(getCommand("voar")).setExecutor(new VoarCommand(flightService, terrenoService, messageService));
 
         if (!economy.isAvailable()) {
             getLogger().warning("Nenhuma economia registrada no Vault ainda; as compras de terreno ficam indisponiveis ate uma ser registrada.");
@@ -92,6 +99,10 @@ public final class JocoTerrenos extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Desliga o voo de todos antes de fechar o banco: a permissão de voar fica salva no arquivo do jogador
+        if (flightService != null) {
+            flightService.disableAll();
+        }
         // Fecha a conexão com o banco de dados
         if (databaseManager != null) {
             databaseManager.close();
@@ -106,6 +117,7 @@ public final class JocoTerrenos extends JavaPlugin {
         pluginManager.registerEvents(new EntityProtectionListener(protectionService), this);
         pluginManager.registerEvents(new EnvironmentProtectionListener(protectionService), this);
         pluginManager.registerEvents(new EntryProtectionListener(this, protectionService), this);
+        pluginManager.registerEvents(new FlightListener(flightService), this);
     }
 
     /** Fails fast: a plugin that cannot protect lands must not keep selling them. */

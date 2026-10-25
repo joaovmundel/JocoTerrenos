@@ -90,7 +90,7 @@ public class ResourcesTest {
     /** A Java string literal, empty ones included: skipping {@code ""} would pair the quotes wrongly. */
     private static final Pattern STRING_LITERAL = Pattern.compile("\"((?:[^\"\\\\\\r\\n]|\\\\.)*)\"");
     private static final Pattern MESSAGE_KEY = Pattern.compile(
-            "^(terreno|protection|help|status|errors|cercar|removercerca|resizecerca|fences|action)[.][a-z0-9.\\-]+$"
+            "^(terreno|protection|help|status|errors|cercar|removercerca|resizecerca|fences|action|fly)[.][a-z0-9.\\-]+$"
                     + "|^(only-player|invalid-number|invalid-size|invalid-location|no-permission)$");
 
     private static String read(String resource) throws IOException {
@@ -124,8 +124,9 @@ public class ResourcesTest {
         assertEquals("io.github.joaovmundel.jocoTerrenos.JocoTerrenos", description.getMain());
         assertEquals(1, description.getDepend().size());
         assertEquals("Vault", description.getDepend().get(0));
-        assertEquals(4, description.getCommands().size());
+        assertEquals(5, description.getCommands().size());
         assertTrue(description.getCommands().containsKey("terreno"));
+        assertTrue(description.getCommands().containsKey("voar"));
     }
 
     @Test
@@ -139,7 +140,7 @@ public class ResourcesTest {
 
         assertEquals(PermissionDefault.TRUE, byName.get("jocoterrenos.terreno").getDefault());
         for (String adminOnly : new String[]{"jocoterrenos.cercar", "jocoterrenos.resizecerca",
-                "jocoterrenos.removercerca", "jocoterrenos.bypass", "jocoterrenos.admin"}) {
+                "jocoterrenos.removercerca", "jocoterrenos.bypass", "jocoterrenos.admin", "jocoterrenos.voar"}) {
             assertNotNull(adminOnly + " is not declared", byName.get(adminOnly));
             assertEquals(adminOnly, PermissionDefault.OP, byName.get(adminOnly).getDefault());
         }

@@ -183,6 +183,8 @@ final class SaleSubCommands {
         }
         // the old owner and members are strangers now: if new lands start private, nobody is left stuck inside
         plugin.getProtectionService().expelIntruders(terreno.getId());
+        // the seller may be flying over what is no longer their land
+        plugin.getFlightService().revalidateAll();
     }
 
     private void vendas(Player player) {

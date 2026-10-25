@@ -6,7 +6,7 @@
 #
 # Nao altere locale-version. Quando uma versao nova do plugin trouxer textos novos, este arquivo e guardado
 # como pt_BR.yml.vN.bak e substituido pelo novo; copie suas alteracoes do .bak se quiser mante-las.
-locale-version: 5
+locale-version: 6
 
 prefix: '&8[&6Terrenos&8]&r '
 
@@ -148,6 +148,16 @@ terreno.vendas.vazio: '{prefix}&7Nenhum terreno esta a venda no momento.'
 terreno.vendas.titulo: '&8----- &6&lTerrenos a venda &8-----'
 terreno.vendas.linha: '&8#&7{id} &b{name} &8| &e{owner} &8| &f{size}&7x&f{size} &8| &6{price} &8| &7{where}'
 terreno.vendas.rodape: '&7Compre com &6/terreno adquirir &e<dono> <nome>&7, ou de dentro do terreno com &6/terreno adquirir&7.'
+
+# Voar
+fly.enabled: '{prefix}&aModo voar ligado! &7Ele desliga se voce sair do seu terreno.'
+fly.disabled: '{prefix}&7Modo voar &cdesligado&7.'
+fly.world: '{prefix}&cO &6/voar &cso funciona nos mundos onde se pode comprar terrenos: &e{worlds}&c.'
+fly.not-in-own-land: '{prefix}&cVoce so pode voar dentro de um terreno seu ou do qual e membro.'
+fly.creative: '{prefix}&7Voce ja pode voar no modo criativo.'
+fly.off-left-land: '{prefix}&eModo voar desligado: voce saiu do seu terreno.'
+fly.off-world: '{prefix}&eModo voar desligado: este mundo nao permite voar.'
+fly.off-permission: '{prefix}&eModo voar desligado: voce nao tem mais permissao.'
 
 # Protecao
 protection.denied: '{prefix}&cEste terreno pertence a &e{owner}&c. Voce nao pode fazer isso aqui.'
