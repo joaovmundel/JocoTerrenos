@@ -42,7 +42,7 @@ public class RemoverCercaCommand implements CommandExecutor {
             int tamanho = Integer.parseInt(args[0]);
             Location centerLoc = player.getLocation();
             String resultado = FenceUtils.removerCercas(centerLoc, tamanho);
-            player.sendMessage(resultado);
+            messages.sendText(player, resultado);
         } catch (NumberFormatException e) {
             messages.send(player, "invalid-number");
             return true;

@@ -49,7 +49,7 @@ public class ResizeCercaCommand implements CommandExecutor {
             String resultado = FenceUtils.resizeCercas(centerLoc, tamanhoAntigo, tamanhoNovo);
 
             // Envia o resultado para o jogador
-            player.sendMessage(resultado);
+            messages.sendText(player, resultado);
 
         } catch (NumberFormatException e) {
             messages.send(player, "invalid-number");

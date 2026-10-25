@@ -7,6 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,27 +66,38 @@ public final class ProtectionService {
      * only has to cancel its event
      */
     public boolean denyBuild(Player player, Block block) {
-        if (canBuild(player, claimAt(block))) {
+        Claim claim = claimAt(block);
+        if (canBuild(player, claim)) {
             return false;
         }
-        notifyDenied(player, MESSAGE_DENIED);
+        notifyDeniedBuild(player, claim);
         return true;
     }
 
     /** Same as {@link #denyBuild(Player, Block)} for a location (entities, hanging items). */
     public boolean denyBuild(Player player, Location location) {
-        if (canBuild(player, claimAt(location))) {
+        Claim claim = claimAt(location);
+        if (canBuild(player, claim)) {
             return false;
         }
-        notifyDenied(player, MESSAGE_DENIED);
+        notifyDeniedBuild(player, claim);
         return true;
+    }
+
+    /** Tells the player the land belongs to someone else. */
+    public void notifyDeniedBuild(Player player, Claim claim) {
+        notifyDenied(player, MESSAGE_DENIED, MessageService.placeholders("owner", claim.getOwnerKey()));
+    }
+
+    public void notifyDenied(Player player, String messageKey) {
+        notifyDenied(player, messageKey, Collections.<String, Object>emptyMap());
     }
 
     /**
      * Tells the player why they were stopped. Events like block interactions fire many times per second, so
      * the message is rate limited per player.
      */
-    public void notifyDenied(Player player, String messageKey) {
+    public void notifyDenied(Player player, String messageKey, Map<String, ?> placeholders) {
         String key = PlayerKeys.of(player);
         long now = System.currentTimeMillis();
         Long last = lastMessageAt.get(key);
@@ -93,7 +105,7 @@ public final class ProtectionService {
             return;
         }
         lastMessageAt.put(key, now);
-        messages.send(player, messageKey);
+        messages.send(player, messageKey, placeholders);
     }
 
     /** Drops the rate limit state of a player who left. */

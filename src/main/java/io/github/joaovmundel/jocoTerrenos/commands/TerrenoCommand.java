@@ -8,7 +8,6 @@ import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
-import io.github.joaovmundel.jocoTerrenos.utils.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -104,7 +103,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         String nome = joinArgs(args, 2);
 
         if (nome.length() > MAX_NAME_LENGTH) {
-            messages.send(player, "terreno.comprar.nome-longo");
+            messages.send(player, "terreno.comprar.nome-longo", MessageService.placeholders("max", MAX_NAME_LENGTH));
             return true;
         }
 
@@ -161,7 +160,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(messages.format("terreno.listar.linha",
                     MessageService.placeholders(
                             "id", terreno.getId(),
-                            "name", StringUtils.capitalizeFirstLetter(terreno.getName()),
+                            "name", terreno.getName(),
                             "size", terreno.getSize(),
                             "pvp", pvp,
                             "mobs", mobs
@@ -186,9 +185,8 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private void exibirInfo(Player player, Terreno t) {
         MessageService messages = plugin.getMessageService();
-        player.sendMessage(messages.get("terreno.info.titulo"));
+        player.sendMessage(messages.format("terreno.info.titulo", MessageService.placeholders("name", t.getName())));
         player.sendMessage(messages.format("terreno.info.dono", MessageService.placeholders("owner", t.getDonoNome())));
-        player.sendMessage(messages.format("terreno.info.nome", MessageService.placeholders("name", t.getName())));
         player.sendMessage(messages.format("terreno.info.tamanho", MessageService.placeholders("size", t.getSize())));
         player.sendMessage(messages.format("terreno.info.localizacao", MessageService.placeholders("location", LocationUtils.formattedLocation(t.getLocation()))));
         player.sendMessage(messages.format("terreno.info.pvp", MessageService.placeholders("pvp", statusHabilitado(t.getPvp()))));
@@ -265,18 +263,18 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             }
 
             Terreno atualizado = terrenoService.buscarTerrenoPorNome(donoNome, nome);
+            String nomeTerreno = atualizado.getName();
             switch (toggle) {
                 case PVP:
-                    player.sendMessage(messages.format("terreno.toggle.pvp", MessageService.placeholders("status", statusHabilitado(atualizado.getPvp()))));
+                    messages.send(player, "terreno.toggle.pvp", MessageService.placeholders("name", nomeTerreno, "status", statusHabilitado(atualizado.getPvp())));
                     break;
                 case MOBS:
-                    player.sendMessage(messages.format("terreno.toggle.mobs", MessageService.placeholders("status", statusHabilitado(atualizado.getMobs()))));
+                    messages.send(player, "terreno.toggle.mobs", MessageService.placeholders("name", nomeTerreno, "status", statusHabilitado(atualizado.getMobs())));
                     break;
                 default:
-                    player.sendMessage(messages.format("terreno.toggle.publico", MessageService.placeholders("status", statusHabilitado(atualizado.getPublicAccess()))));
+                    messages.send(player, "terreno.toggle.publico", MessageService.placeholders("name", nomeTerreno, "status", statusHabilitado(atualizado.getPublicAccess())));
                     break;
             }
-            messages.send(player, "terreno.toggle.sucesso", MessageService.placeholders("name", nome));
         } catch (TerrenoNotFoundException e) {
             messages.send(player, "terreno.info.nao-encontrado");
         }

@@ -1,120 +1,117 @@
-# Mensagens padrao (Portugues - Brasil)
-# Use & para cores. Placeholders: {player}, {price}, {size}, {name}
+# Textos do JocoTerrenos (Portugues - Brasil). Somente ASCII: a 1.5.2 nao lida bem com acentos.
+#
+# Cores:  &6 destaque e comandos   &e valores e argumentos   &b nomes de terrenos   &f numeros
+#         &7 texto comum           &8 separadores e detalhes &a sucesso e ligado    &c erro e desligado
+# {prefix} vira o valor da chave "prefix". \n quebra a linha.
+#
+# Nao altere locale-version. Quando uma versao nova do plugin trouxer textos novos, este arquivo e guardado
+# como pt_BR.yml.vN.bak e substituido pelo novo; copie suas alteracoes do .bak se quiser mante-las.
+locale-version: 1
 
-prefix: '&6[Terreno]&r '
+prefix: '&8[&6Terrenos&8]&r '
 
 # Gerais
-only-player: '&cEste comando so pode ser executado por um jogador!'
-invalid-number: '&cPor favor, insira um numero valido!'
-invalid-size: '&cO tamanho deve ser maior que zero!'
-invalid-location: '&cLocalizacao invalida!'
+only-player: '{prefix}&cApenas jogadores podem usar este comando.'
+no-permission: '{prefix}&cVoce nao tem permissao para usar este comando.'
+invalid-number: '{prefix}&cDigite um numero valido.'
+invalid-size: '{prefix}&cO tamanho deve ser maior que zero.'
+invalid-location: '{prefix}&cLocalizacao invalida.'
 
 # Ajuda
-help.title: '&6&lJocoTerrenos &7- Ajuda'
+help.title: '&8----- &6&lTerrenos &8- &7Comandos &8-----'
 help.lines:
-  - '&7/terreno comprar [tamanho] [nome] &f- Compra um terreno'
-  - '&7/terreno preco [tamanho] &f- Mostra o preco de um terreno NxN'
-  - '&7/terreno listar &f- Lista seus terrenos'
-  - '&7/terreno info [nome] &f- Informacoes do terreno atual ou pelo nome'
-  - '&7/terreno deletar [nome] &f- Deleta um terreno'
-  - '&7/terreno pvp [nome] &f- Alterna PvP'
-  - '&7/terreno mobs [nome] &f- Alterna Mobs'
-  - '&7/terreno publico [nome] &f- Alterna acesso publico'
-  - '&7/terreno tp [nome] &f- Teleporta para um local seguro dentro do terreno'
+  - '&6/terreno comprar &e<tamanho> <nome> &8- &7Compra um terreno'
+  - '&6/terreno preco &e<tamanho> &8- &7Mostra o &6preco &7de um terreno'
+  - '&6/terreno listar &8- &7Lista os &bseus &7terrenos'
+  - '&6/terreno info &e[nome] &8- &7Mostra as informacoes do terreno'
+  - '&6/terreno pvp &e<nome> &8- &7Liga ou desliga o &cPvP'
+  - '&6/terreno mobs &e<nome> &8- &7Liga ou desliga os &cmobs'
+  - '&6/terreno publico &e<nome> &8- &7Liga ou desliga o &aacesso publico'
+  - '&6/terreno tp &e<nome> &8- &7Teleporta para o terreno'
+  - '&6/terreno deletar &e<nome> &8- &7Apaga o terreno e as cercas'
 
-# Cercas
-cercar.usage: '&cUso: /cercar <area_em_m2>'
-removercerca.usage: '&cUso: /removercerca <tamanho>'
-removercerca.example1: '&7Exemplo: /removercerca 10'
-removercerca.example2: '&7Isso removera as cercas de uma area 10x10 ao seu redor'
-resizecerca.usage: '&cUso: /resizecerca <tamanho_antigo> <tamanho_novo>'
-resizecerca.example1: '&7Exemplo: /resizecerca 10 20'
-resizecerca.example2: '&7Isso redimensionara uma area de 10x10 para 20x20'
-resizecerca.iguais: '&cOs tamanhos sao iguais! Nenhuma alteracao necessaria.'
+# Cercas (ferramentas de teste, so para admins)
+cercar.usage: '{prefix}&cUso: &6/cercar &e<tamanho>'
+removercerca.usage: '{prefix}&cUso: &6/removercerca &e<tamanho>'
+removercerca.example1: '&7Exemplo: &6/removercerca &e10'
+removercerca.example2: '&7Remove as cercas de uma area de &f10&7x&f10 &7ao seu redor.'
+resizecerca.usage: '{prefix}&cUso: &6/resizecerca &e<tamanho_antigo> <tamanho_novo>'
+resizecerca.example1: '&7Exemplo: &6/resizecerca &e10 20'
+resizecerca.example2: '&7Redimensiona uma area de &f10&7x&f10 &7para &f20&7x&f20&7.'
+resizecerca.iguais: '{prefix}&cOs tamanhos sao iguais. Nada a alterar.'
 
-fences.removed.success: '&aCercas removidas com sucesso!\n&7Area: {size}x{size} blocos ({area}m2)\n&7Total de cercas removidas: {count}'
-fences.resize.success: '&aArea {acao} com sucesso!\n&7Tamanho antigo: {old}x{old} ({oldArea}m2)\n&7Tamanho novo: {new}x{new} ({newArea}m2)\n&7Cercas removidas: {removed}\n&7Cercas colocadas: {placed}'
+fences.removed.success: '{prefix}&aCercas removidas!\n&7Area: &f{size}&7x&f{size} &8(&f{area} &7blocos&8)\n&7Cercas removidas: &e{count}'
+fences.resize.success: '{prefix}&aArea {acao} com sucesso!\n&7Antes: &f{old}&7x&f{old} &8(&f{oldArea} &7blocos&8)\n&7Agora: &f{new}&7x&f{new} &8(&f{newArea} &7blocos&8)\n&7Cercas removidas: &e{removed} &8| &7colocadas: &e{placed}'
 action.expandida: 'expandida'
 action.reduzida: 'reduzida'
 
-# Terreno comprar
+# Comprar
 terreno.comprar.usage-title: ''
-terreno.comprar.usage1: '&cUso: /terreno comprar [tamanho] [nome]'
-terreno.comprar.usage2: '&7Exemplo: /terreno comprar 10 casa'
-terreno.comprar.nome-longo: '&cO nome do terreno nao pode ter mais que 15 caracteres!'
-terreno.comprar.tamanho-invalido-min: '&cTamanho minimo: {min}'
-terreno.comprar.tamanho-invalido-max: '&cTamanho maximo: {max}'
-terreno.comprar.preco: '&7Preco do terreno: &e{price}'
-terreno.comprar.sucesso: '&aTerreno comprado com sucesso!'
-terreno.comprar.info-dono: '&7Dono: &f{player}'
-terreno.comprar.info-terreno: '&7Terreno: &f{name}'
-terreno.comprar.info-tamanho: '&7Tamanho: {size}x{size}'
-terreno.comprar.falha: '&cNao foi possivel comprar o terreno. Verifique saldo, nome unico e parametros.'
-terreno.comprar.area-indisponivel: '&cArea indisponivel! O terreno precisa estar a pelo menos {buffer} blocos de distancia de outros terrenos.'
+terreno.comprar.usage1: '{prefix}&cUso: &6/terreno comprar &e<tamanho> <nome>'
+terreno.comprar.usage2: '&7Exemplo: &6/terreno comprar &e10 &bcasa'
+terreno.comprar.nome-longo: '{prefix}&cO nome do terreno pode ter no maximo &e{max} &ccaracteres.'
+terreno.comprar.tamanho-invalido-min: '{prefix}&cTamanho minimo: &e{min}'
+terreno.comprar.tamanho-invalido-max: '{prefix}&cTamanho maximo: &e{max}'
+terreno.comprar.preco: '{prefix}&7Preco do terreno: &6{price}'
+terreno.comprar.sucesso: '{prefix}&aTerreno comprado com sucesso!'
+terreno.comprar.info-dono: '&7Dono: &e{player}'
+terreno.comprar.info-terreno: '&7Terreno: &b{name}'
+terreno.comprar.info-tamanho: '&7Tamanho: &f{size}&7x&f{size}'
+terreno.comprar.falha: '{prefix}&cNao foi possivel comprar o terreno. Confira seu &esaldo&c, se o &enome &cainda nao existe e os valores digitados.'
+terreno.comprar.area-indisponivel: '{prefix}&cArea indisponivel! O terreno precisa ficar a pelo menos &e{buffer} &cblocos de outros terrenos.'
 
-# Terreno listar
-terreno.listar.vazio: '&eVoce nao possui terrenos.'
-terreno.listar.titulo: '&a&l=== Seus Terrenos ==='
-# Sem texto clicavel: o chat do Minecraft 1.5.2 nao suporta JSON.
-terreno.listar.linha: '&7#{id} - &6{name}&7: &fTamanho: &e{size}x{size} &f- PvP: {pvp} &f- Mobs: {mobs}'
+# Listar
+terreno.listar.vazio: '{prefix}&7Voce ainda nao tem terrenos. Use &6/terreno comprar&7.'
+terreno.listar.titulo: '&8----- &6&lSeus terrenos &8-----'
+terreno.listar.linha: '&8#&7{id} &b{name} &8| &f{size}&7x&f{size} &8| &7PvP {pvp} &8| &7Mobs {mobs}'
 
-# Terreno info
-terreno.info.nao-no-terreno: '&eVoce nao esta em nenhum terreno no momento.'
-terreno.info.nao-encontrado: '&eTerreno nao encontrado.'
-terreno.info.titulo: '&a&l=== Informacoes do Terreno ==='
-terreno.info.dono: '&7Dono: &f{owner}'
-terreno.info.nome: '&7Terreno: &f{name}'
-terreno.info.tamanho: '&7Tamanho: &f{size}x{size}'
+# Info
+terreno.info.nao-no-terreno: '{prefix}&7Voce nao esta dentro de nenhum terreno.'
+terreno.info.nao-encontrado: '{prefix}&cTerreno nao encontrado.'
+terreno.info.titulo: '&8----- &6&lTerreno &b{name} &8-----'
+terreno.info.dono: '&7Dono: &e{owner}'
+terreno.info.tamanho: '&7Tamanho: &f{size}&7x&f{size}'
 terreno.info.localizacao: '&7Localizacao: &f{location}'
 terreno.info.pvp: '&7PvP: {pvp}'
 terreno.info.mobs: '&7Mobs: {mobs}'
-terreno.info.publico: '&7Acesso Publico: {public}'
+terreno.info.publico: '&7Acesso publico: {public}'
 terreno.info.membros: '&7Membros: &f{count}'
 
-# Terreno deletar
-terreno.deletar.usage: '&cUso: /terreno deletar [nome]'
-terreno.deletar.sucesso: '&aTereno deletado com sucesso!'
-terreno.deletar.erro: '&cErro ao deletar terreno!'
-terreno.deletar.id-invalido: '&cPor favor, insira um ID valido!'
+# Deletar
+terreno.deletar.usage: '{prefix}&cUso: &6/terreno deletar &e<nome>'
+terreno.deletar.sucesso: '{prefix}&aTerreno deletado. As cercas foram removidas.'
+terreno.deletar.erro: '{prefix}&cNao foi possivel deletar o terreno.'
 
-# Toggle generico
-terreno.toggle.nao-dono: '&cVoce nao e o dono deste terreno!'
-terreno.toggle.erro: '&cOcorreu um erro ao atualizar o terreno!'
-terreno.toggle.sucesso: '&6[Terreno] &7Configuracao atualizada com sucesso para &f{name}&7!'
-terreno.toggle.pvp: '&6[Terreno] &7PvP {status}!'
-terreno.toggle.mobs: '&6[Terreno] &7Mobs {status}!'
-terreno.toggle.publico: '&6[Terreno] &7Acesso publico {status}!'
-terreno.pvp.usage: '&cUso: /terreno pvp [nome]'
-terreno.mobs.usage: '&cUso: /terreno mobs [nome]'
-terreno.publico.usage: '&cUso: /terreno publico [nome]'
+# PvP, mobs e acesso publico
+terreno.toggle.nao-dono: '{prefix}&cVoce nao e o dono deste terreno.'
+terreno.toggle.erro: '{prefix}&cOcorreu um erro ao atualizar o terreno.'
+terreno.toggle.pvp: '{prefix}&7PvP no terreno &b{name}&7: {status}'
+terreno.toggle.mobs: '{prefix}&7Mobs no terreno &b{name}&7: {status}'
+terreno.toggle.publico: '{prefix}&7Acesso publico no terreno &b{name}&7: {status}'
+terreno.pvp.usage: '{prefix}&cUso: &6/terreno pvp &e<nome>'
+terreno.mobs.usage: '{prefix}&cUso: &6/terreno mobs &e<nome>'
+terreno.publico.usage: '{prefix}&cUso: &6/terreno publico &e<nome>'
 
 status.on: '&aON'
 status.off: '&cOFF'
-status.habilitado: '&ahabilitado'
-status.desabilitado: '&cdesabilitado'
+status.habilitado: '&aLigado'
+status.desabilitado: '&cDesligado'
 status.sim: '&aSim'
 status.nao: '&cNao'
 
 # Teleporte
-terreno.tp.usage: '&cUso: /terreno tp [nome]'
-terreno.tp.sem-permissao: '&cVoce nao tem permissao para teleportar para este terreno!'
-terreno.tp.sucesso: '&aTeleportado para um local seguro no terreno &f{name}&a!'
-terreno.tp.falha: '&cNao foi possivel encontrar um local seguro para teleportar neste terreno.'
+terreno.tp.usage: '{prefix}&cUso: &6/terreno tp &e<nome>'
+terreno.tp.sem-permissao: '{prefix}&cVoce nao pode se teleportar para este terreno.'
+terreno.tp.sucesso: '{prefix}&aTeleportado para o terreno &b{name}&a.'
+terreno.tp.falha: '{prefix}&cNao encontrei um local seguro neste terreno.'
 
 # Preco
-terreno.preco.usage1: '&cUso: /terreno preco [tamanho]'
-terreno.preco.usage2: '&7Exemplo: /terreno preco 10'
-terreno.preco.min: '&cTamanho minimo: {min}'
-terreno.preco.max: '&cTamanho maximo: {max}'
-terreno.preco.valor: '&aPreco do terreno {size}x{size}: &e{price}'
+terreno.preco.usage1: '{prefix}&cUso: &6/terreno preco &e<tamanho>'
+terreno.preco.usage2: '&7Exemplo: &6/terreno preco &e10'
+terreno.preco.min: '{prefix}&cTamanho minimo: &e{min}'
+terreno.preco.max: '{prefix}&cTamanho maximo: &e{max}'
+terreno.preco.valor: '{prefix}&7Terreno de &f{size}&7x&f{size}&7: &6{price}'
 
 # Protecao
-protection.denied: '&cEste terreno pertence a outro jogador. Voce nao pode fazer isso aqui.'
-protection.pvp-disabled: '&cO PvP esta desabilitado neste terreno.'
-no-permission: '&cVoce nao tem permissao para usar este comando!'
-
-errors:
-  terreno:
-    id-nao-encontrado: '&cTerreno nao encontrado pelo ID informado.'
-    nome-invalido: '&cNome do terreno invalido.'
-    nao-encontrado: '&cTerreno nao encontrado.'
+protection.denied: '{prefix}&cEste terreno pertence a &e{owner}&c. Voce nao pode fazer isso aqui.'
+protection.pvp-disabled: '{prefix}&cO PvP esta desligado neste terreno.'

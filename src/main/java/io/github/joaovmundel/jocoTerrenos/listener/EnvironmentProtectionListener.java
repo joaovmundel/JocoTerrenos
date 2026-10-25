@@ -63,7 +63,7 @@ public final class EnvironmentProtectionListener implements Listener {
         }
         event.setCancelled(true);
         if (player != null) {
-            protection.notifyDenied(player, ProtectionService.MESSAGE_DENIED);
+            protection.notifyDeniedBuild(player, claim);
         }
     }
 

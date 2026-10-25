@@ -23,11 +23,17 @@ import java.util.Objects;
 /**
  * Player messages from {@code locales/<language>.yml}. Bukkit 1.5.2 reads YAML in the platform charset, so the
  * files are decoded as UTF-8 here. Missing keys fall back to the default language, then to the copy bundled in
- * the jar (for locale files saved by an older version).
+ * the jar.
+ * <p>
+ * Texts use {@code &} color codes, the {@code {prefix}} placeholder (replaced by the {@code prefix} key) and
+ * {@code \n} for line breaks.
  */
 public class MessageService {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String DEFAULT_LANG = "pt_BR";
+    private static final String[] BUNDLED_LOCALES = {"pt_BR", "en_US"};
+    private static final String PREFIX_KEY = "prefix";
+    private static final String PREFIX_PLACEHOLDER = "{prefix}";
     private static final JocoLogging logger = new JocoLogging(MessageService.class.getName());
 
     private final JavaPlugin plugin;
@@ -39,19 +45,17 @@ public class MessageService {
         this.plugin = plugin;
     }
 
+    /** Creates the locale files on first run and replaces the ones from an older plugin version (with a backup). */
     public void initLocalesFolderAndDefaults() {
-        File locales = new File(plugin.getDataFolder(), "locales");
-        if (!locales.exists() && !locales.mkdirs()) {
-            logger.warning("Could not create locales folder inside plugin data folder.");
-        }
-        saveResourceIfMissing("locales/pt_BR.yml");
-        saveResourceIfMissing("locales/en_US.yml");
-    }
-
-    private void saveResourceIfMissing(String path) {
-        File out = new File(plugin.getDataFolder(), path);
-        if (!out.exists()) {
-            plugin.saveResource(path, false);
+        LocaleInstaller installer = new LocaleInstaller(new File(plugin.getDataFolder(), "locales"),
+                new LocaleInstaller.ResourceSource() {
+                    @Override
+                    public InputStream open(String path) {
+                        return plugin.getResource(path);
+                    }
+                }, plugin.getLogger());
+        for (String code : BUNDLED_LOCALES) {
+            installer.install(code);
         }
     }
 
@@ -124,15 +128,14 @@ public class MessageService {
         }
     }
 
-    public String get(String key) {
+    private String rawString(String key) {
         String value = active.getString(key);
         if (value == null) value = fallback.getString(key);
         if (value == null) value = bundled.getString(key);
-        if (value == null) return key;
-        return colorize(value);
+        return value;
     }
 
-    public List<String> getList(String key) {
+    private List<String> rawList(String key) {
         List<String> list = active.getStringList(key);
         if (list.isEmpty()) {
             list = fallback.getStringList(key);
@@ -140,11 +143,32 @@ public class MessageService {
         if (list.isEmpty()) {
             list = bundled.getStringList(key);
         }
-        List<String> colored = new ArrayList<String>(list.size());
-        for (String line : list) {
-            colored.add(colorize(line));
+        return list;
+    }
+
+    /** @return the colored text of the key, or the key itself when no locale defines it */
+    public String get(String key) {
+        String value = rawString(key);
+        if (value == null) return key;
+        return render(value);
+    }
+
+    public List<String> getList(String key) {
+        List<String> rendered = new ArrayList<String>();
+        for (String line : rawList(key)) {
+            rendered.add(render(line));
         }
-        return colored;
+        return rendered;
+    }
+
+    private String render(String raw) {
+        return render(raw, rawString(PREFIX_KEY));
+    }
+
+    /** Expands {prefix} and line breaks, then the color codes. */
+    static String render(String raw, String prefix) {
+        String text = raw.replace(PREFIX_PLACEHOLDER, prefix != null ? prefix : "").replace("\\n", "\n");
+        return ChatColor.translateAlternateColorCodes('&', text);
     }
 
     public String format(String key, Map<String, ?> placeholders) {
@@ -157,11 +181,18 @@ public class MessageService {
     }
 
     public void send(CommandSender sender, String key, Map<String, ?> placeholders) {
-        sender.sendMessage(applyPlaceholders(get(key), placeholders));
+        sendText(sender, applyPlaceholders(get(key), placeholders));
     }
 
     public void sendList(CommandSender sender, String key) {
         for (String line : getList(key)) {
+            sender.sendMessage(line);
+        }
+    }
+
+    /** Sends already rendered text, one chat line per line break (the 1.5.2 chat cannot show a newline). */
+    public void sendText(CommandSender sender, String text) {
+        for (String line : text.split("\n")) {
             sender.sendMessage(line);
         }
     }
@@ -175,10 +206,6 @@ public class MessageService {
             out = out.replace("{" + k + "}", v);
         }
         return out;
-    }
-
-    private String colorize(String input) {
-        return ChatColor.translateAlternateColorCodes('&', input);
     }
 
     public static Map<String, Object> placeholders(Object... kv) {

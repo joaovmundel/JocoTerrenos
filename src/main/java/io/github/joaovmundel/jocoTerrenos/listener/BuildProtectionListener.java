@@ -95,7 +95,7 @@ public final class BuildProtectionListener implements Listener {
         if (item != null && ProtectionRules.isRestrictedItem(item.getType().name())) {
             event.setUseItemInHand(Event.Result.DENY);
         }
-        protection.notifyDenied(player, ProtectionService.MESSAGE_DENIED);
+        protection.notifyDeniedBuild(player, claim);
     }
 
     /** Stepping on something: plates and tripwires follow the "use" rule, trampling farmland needs build access. */

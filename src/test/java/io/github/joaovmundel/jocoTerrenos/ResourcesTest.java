@@ -204,6 +204,23 @@ public class ResourcesTest {
     }
 
     @Test
+    public void noLocaleKeyIsDeadText() throws Exception {
+        Set<String> used = messageKeysUsedInSources();
+        Set<String> dead = leafKeys(yaml("/locales/pt_BR.yml"));
+        dead.removeAll(used);
+        dead.remove("prefix");
+        dead.remove("locale-version");
+
+        assertTrue("texts nobody asks for (delete them or use them): " + dead, dead.isEmpty());
+    }
+
+    @Test
+    public void bothLocalesCarryTheSameVersion() throws Exception {
+        assertEquals(yaml("/locales/pt_BR.yml").getInt("locale-version"), yaml("/locales/en_US.yml").getInt("locale-version"));
+        assertTrue(yaml("/locales/pt_BR.yml").getInt("locale-version") >= 1);
+    }
+
+    @Test
     public void defaultConfigIsConsistent() throws Exception {
         YamlConfiguration config = yaml("/config.yml");
 
