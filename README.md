@@ -7,9 +7,11 @@ local, compra um terreno quadrado com `/terreno comprar`, o plugin cobra pelo Va
 ## Principais recursos
 - Compra de terrenos quadrados via comando, com custo `tamanho² × block-price` (Vault)
 - Listagem e visualização de informações do terreno atual ou por nome
-- Configurações por terreno: PvP, Mobs e Acesso Público
+- Configurações por terreno: PvP, Mobs e entrada de visitantes
 - Teleporte para um local seguro dentro do terreno
 - Proteção dos terrenos (construir, quebrar, abrir baús, balde, fogo, explosões, líquidos, pistões, PvP e mobs)
+- Terrenos privados: só o dono e os membros entram; quem ficou preso dentro é levado para a borda de fora
+- Venda de terrenos entre jogadores (`/terreno vender`, `/terreno adquirir`)
 - Persistência em SQLite (padrão) ou MySQL, com os drivers que o próprio servidor já traz
 
 ## Diferenças em relação à `main` (1.21)
@@ -21,6 +23,7 @@ local, compra um terreno quadrado com `/terreno comprar`, o plugin cobra pelo Va
 | `/terreno listar` | nomes clicáveis (JSON) | texto simples |
 | Assíncrono | `CompletableFuture` | tudo na thread principal (consultas vêm da memória) |
 | Linguagem | Java 17+ | código Java 7, bytecode Java 8 |
+| Textos | UTF-8 com acentos | **ASCII puro**, sem acentos (a 1.5.2 não lida bem com eles) |
 
 Como o servidor é *offline-mode*, nomes são falsificáveis: a proteção só vale enquanto o AuthMe impedir que alguém
 entre com o nome de outro jogador.
@@ -34,6 +37,9 @@ entre com o nome de outro jogador.
 2. Inicie o servidor: o plugin cria `plugins/JocoTerrenos/config.yml`, `locales/` e `terrenos.db`.
 3. Confira o log por `JocoTerrenos habilitado com sucesso!` e por `SEVERE`/`WARNING`.
 4. Conceda as permissões pelo PermissionsEx (veja a tabela abaixo).
+
+Ao atualizar o plugin, `locales/*.yml` e o banco se atualizam sozinhos: um locale mais antigo que o do jar é guardado
+como `pt_BR.yml.v1.bak` e trocado pelo novo, e colunas novas do banco são criadas sem perder terrenos.
 
 ## Configuração do banco de dados
 SQLite (padrão)
@@ -67,8 +73,12 @@ Terrenos (`/terreno`):
 - `/terreno deletar [nome]` — Deleta o terreno indicado (remove cercas associadas, sem reembolso)
 - `/terreno pvp [nome]` — Alterna PvP do terreno
 - `/terreno mobs [nome]` — Alterna mobs do terreno
-- `/terreno publico [nome]` — Alterna acesso público do terreno
-- `/terreno tp [nome]` — Teleporta você para um local seguro dentro do terreno
+- `/terreno publico <nome>` — Libera ou fecha a entrada de visitantes no terreno
+- `/terreno tp <nome>` — Teleporta você para um local seguro dentro do terreno
+- `/terreno vender <nome> <valor>` — Coloca o terreno à venda (o valor é a última palavra; vender de novo muda o preço)
+- `/terreno cancelarvenda <nome>` — Tira o terreno da venda
+- `/terreno vendas` — Lista os terrenos à venda, do mais barato para o mais caro
+- `/terreno adquirir [dono] [nome]` — Compra um terreno à venda: sem argumentos, o terreno em que você está
 
 Nomes de terreno podem ter mais de uma palavra (até 15 caracteres).
 
@@ -79,11 +89,25 @@ borda também não afetam o terreno.
 
 - **PvP**: desligado, ninguém causa dano em jogadores quando atacante ou vítima está no terreno.
 - **Mobs**: desligado, monstros não nascem no terreno (ovos de spawn e comandos continuam funcionando).
-- **Público**: visitantes podem usar portas, alçapões, portões, botões, alavancas e placas de pressão, mas não
-  construir nem abrir baús.
+- **Entrada** (`/terreno publico`): terreno privado (o padrão) só deixa entrar o dono e os membros. Quem tenta andar,
+  navegar ou se teleportar para dentro é barrado; um teleporte para dentro (`/home`, `/back`, ender pearl) vira o ponto
+  mais próximo logo fora da borda. Quem já está dentro quando o terreno fecha, ou que marcou uma home antes dele ficar
+  privado, é levado para fora em vez de ficar preso. Terreno público libera a entrada e também portas, alçapões,
+  portões, botões, alavancas e placas de pressão, mas ninguém de fora constrói nem abre baús.
+- **Terreno à venda** pode ser visitado por qualquer um (para quem quer comprar conhecer), sem poder construir.
+- Quem tem `jocoterrenos.bypass` (OP por padrão) ignora tudo isso: para testar a proteção, use um jogador sem OP.
 - **Membros** (papéis `OWNER`, `ADMIN`, `MEMBER`) constroem como o dono. Ainda não há comando para adicionar membros.
 - A área protegida é o anel das cercas: para tamanhos pares ela tem uma linha de blocos a mais que o tamanho comprado.
 - Limites conhecidos: dispensers, funis, poções arremessadas e crescimento de árvores não são tratados.
+
+## Venda de terrenos
+- O preço é um valor positivo com até 2 casas decimais, no máximo `lands.sale.max-price` (padrão 1000000000).
+- Na compra, o dinheiro vai do comprador para o dono (mesmo offline). O terreno muda de dono, deixa de estar à venda,
+  volta a ser privado e perde os membros do antigo dono. Se o comprador já tem um terreno com o mesmo nome, o novo
+  ganha um número (`Casa` vira `Casa2`).
+- Se algum passo falha, os anteriores são desfeitos (o dinheiro volta). Falhas que não puderem ser desfeitas vão para o
+  log como `SEVERE` com os valores.
+- Preços aparecem no formato da economia do servidor (Vault).
 
 ## Permissões
 | Permissão | Padrão | Efeito |
@@ -95,7 +119,7 @@ borda também não afetam o terreno.
 
 ## Estrutura do banco de dados
 Tabela `terrenos`: `id`, `dono_nome` (minúsculas), `name`, `db_name_key` (dono+nome, único), `location`
-(`mundo:x:y:z`, centro do bloco), `size`, `pvp`, `mobs`, `public_access`, `created_at`, `updated_at` (milissegundos).
+(`mundo:x:y:z`, centro do bloco), `size`, `pvp`, `mobs`, `public_access`, `created_at`, `updated_at` (milissegundos), `sale_price_cents` (centavos inteiros; vazio quando não está à venda).
 
 Tabela `terreno_members`: `id`, `terreno_id` (FK com `ON DELETE CASCADE`), `member_nome`, `member_role`
 (`OWNER`, `ADMIN`, `MEMBER`), `added_at`. Não há migração a partir do banco da `main` (que usa UUID).
@@ -123,9 +147,13 @@ Regras do código: Java 7 (sem lambdas, `Optional`, streams), API 1.5.2 verifica
 ## Troubleshooting
 - Plugin se desabilitou no início: leia o `SEVERE` no `server.log` (banco inacessível ou tabelas ilegíveis).
 - Compra recusada com "falha": confira saldo, nome único, tamanho e se há economia registrada no Vault.
-- Acentos errados nas mensagens: os arquivos em `locales/` precisam estar em UTF-8.
+- Mensagens com textos antigos ou cores erradas: o plugin só troca `locales/*.yml` quando o `locale-version` do jar é
+  maior; se você editou o arquivo e atualizou o plugin, a sua versão fica em `*.bak` na mesma pasta.
+- Linhas extras no console: deixe `debug: false` no `config.yml` (é o padrão).
 
 ## Roadmap
-- Comandos de membros (adicionar, remover, papéis) e transferência de terreno
+- Comandos de membros (adicionar, remover, papéis)
+- Placa clicável no terreno à venda
 - Proteção contra dispensers, funis, poções e crescimento de árvores
+- Barrar a entrada de quem está montado em porco (só barcos e carrinhos são tratados)
 - Limites por jogador, confirmação de compra e reembolso ao deletar
