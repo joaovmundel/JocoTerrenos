@@ -231,6 +231,7 @@ public class ResourcesTest {
         assertTrue(config.getInt("lands.min-size") <= config.getInt("lands.default-size"));
         assertTrue(config.getInt("lands.default-size") <= config.getInt("lands.max-size"));
         assertTrue(config.getLong("protection.message-cooldown-ms") > 0);
+        assertEquals(java.util.Collections.singletonList("world"), config.getStringList("lands.allowed-worlds"));
         assertTrue(config.getDouble("lands.block-price") > 0);
     }
 

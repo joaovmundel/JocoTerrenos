@@ -6,7 +6,7 @@
 #
 # Nao altere locale-version. Quando uma versao nova do plugin trouxer textos novos, este arquivo e guardado
 # como pt_BR.yml.vN.bak e substituido pelo novo; copie suas alteracoes do .bak se quiser mante-las.
-locale-version: 3
+locale-version: 4
 
 prefix: '&8[&6Terrenos&8]&r '
 
@@ -62,6 +62,7 @@ terreno.comprar.info-dono: '&7Dono: &e{player}'
 terreno.comprar.info-terreno: '&7Terreno: &b{name}'
 terreno.comprar.info-tamanho: '&7Tamanho: &f{size}&7x&f{size}'
 terreno.comprar.falha: '{prefix}&cNao foi possivel comprar o terreno. Confira seu &esaldo&c, se o &enome &cainda nao existe e os valores digitados.'
+terreno.comprar.mundo-invalido: '{prefix}&cNao e possivel comprar terrenos neste mundo. Mundos permitidos: &e{worlds}&c.'
 terreno.comprar.area-indisponivel: '{prefix}&cArea indisponivel! O terreno precisa ficar a pelo menos &e{buffer} &cblocos de outros terrenos.'
 
 # Listar

@@ -4,6 +4,7 @@ import io.github.joaovmundel.jocoTerrenos.JocoTerrenos;
 import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.infrastructure.JocoLogging;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
+import io.github.joaovmundel.jocoTerrenos.protection.AllowedWorlds;
 import io.github.joaovmundel.jocoTerrenos.service.MessageService;
 import io.github.joaovmundel.jocoTerrenos.service.TerrenoService;
 import io.github.joaovmundel.jocoTerrenos.utils.FenceUtils;
@@ -109,6 +110,12 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
         if (nome.length() > MAX_NAME_LENGTH) {
             messages.send(player, "terreno.comprar.nome-longo", MessageService.placeholders("max", MAX_NAME_LENGTH));
+            return true;
+        }
+
+        AllowedWorlds mundos = terrenoService.getMundosPermitidos();
+        if (!mundos.allows(player.getWorld().getName())) {
+            messages.send(player, "terreno.comprar.mundo-invalido", MessageService.placeholders("worlds", mundos.describe()));
             return true;
         }
 

@@ -4,6 +4,7 @@ import io.github.joaovmundel.jocoTerrenos.economy.EconomyGateway;
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
+import io.github.joaovmundel.jocoTerrenos.protection.AllowedWorlds;
 import io.github.joaovmundel.jocoTerrenos.protection.Bounds;
 import io.github.joaovmundel.jocoTerrenos.protection.Claim;
 import io.github.joaovmundel.jocoTerrenos.protection.ClaimIndex;
@@ -104,6 +105,9 @@ public class TerrenoService {
         }
         // Centro proposto do terreno
         Location loc = player.getLocation();
+        if (loc.getWorld() == null || !mundoPermitido(loc.getWorld().getName())) {
+            return null;
+        }
         // Verifica disponibilidade da área com espaçamento mínimo
         if (!isAreaDisponivel(loc, tamanho, getEspacoEntreTerrenos())) {
             return null;
@@ -143,6 +147,15 @@ public class TerrenoService {
         }
         indexClaim(created);
         return created;
+    }
+
+    /** Worlds where lands can be bought, from {@code lands.allowed-worlds}; every world when the list is empty. */
+    public AllowedWorlds getMundosPermitidos() {
+        return new AllowedWorlds(config.getStringList("lands.allowed-worlds"));
+    }
+
+    public boolean mundoPermitido(String worldName) {
+        return getMundosPermitidos().allows(worldName);
     }
 
     public boolean tamanhoValido(int tamanho) {

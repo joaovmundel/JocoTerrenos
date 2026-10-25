@@ -34,6 +34,10 @@ protection:
 
 # Land Settings
 lands:
+  # Worlds where lands can be bought (and where /voar works). An empty list means every world.
+  # Names are compared ignoring case. Lands that already exist in other worlds stay protected.
+  allowed-worlds:
+    - world
   # Default land size (in blocks)
   default-size: 10
   # Maximum allowed size

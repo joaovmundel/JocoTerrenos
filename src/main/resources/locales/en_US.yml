@@ -6,7 +6,7 @@
 #
 # Do not change locale-version. When a newer plugin version ships new texts, this file is kept as
 # en_US.yml.vN.bak and replaced by the new one; copy your changes from the .bak if you want to keep them.
-locale-version: 3
+locale-version: 4
 
 prefix: '&8[&6Lands&8]&r '
 
@@ -62,6 +62,7 @@ terreno.comprar.info-dono: '&7Owner: &e{player}'
 terreno.comprar.info-terreno: '&7Land: &b{name}'
 terreno.comprar.info-tamanho: '&7Size: &f{size}&7x&f{size}'
 terreno.comprar.falha: '{prefix}&cCould not buy the land. Check your &ebalance&c, that the &ename &cis not taken yet and the values you typed.'
+terreno.comprar.mundo-invalido: '{prefix}&cLands cannot be bought in this world. Allowed worlds: &e{worlds}&c.'
 terreno.comprar.area-indisponivel: '{prefix}&cArea unavailable! The land must be at least &e{buffer} &cblocks away from other lands.'
 
 # List
