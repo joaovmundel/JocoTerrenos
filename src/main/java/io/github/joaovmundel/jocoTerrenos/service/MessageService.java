@@ -22,6 +22,8 @@ public class MessageService {
     private final JavaPlugin plugin;
     private YamlConfiguration active;
     private YamlConfiguration fallback;
+    /** Texts shipped inside the jar: covers keys added by an update to locale files already saved on disk. */
+    private YamlConfiguration bundled = new YamlConfiguration();
 
     private static final String DEFAULT_LANG = "pt_BR";
     private static final JocoLogging logger = new JocoLogging(MessageService.class.getName());
@@ -65,6 +67,20 @@ public class MessageService {
         if (this.active == null) {
             this.active = this.fallback;
         }
+        YamlConfiguration shipped = loadBundledLocale(DEFAULT_LANG);
+        this.bundled = shipped != null ? shipped : new YamlConfiguration();
+    }
+
+    private YamlConfiguration loadBundledLocale(String code) {
+        try (InputStream in = plugin.getResource("locales/" + code + ".yml")) {
+            if (in == null) {
+                return null;
+            }
+            return YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
+        } catch (java.io.IOException e) {
+            logger.warning("Não foi possível ler os textos embutidos de " + code + ": " + e.getMessage());
+            return null;
+        }
     }
 
     private YamlConfiguration loadLocale(String code) {
@@ -87,6 +103,7 @@ public class MessageService {
     public String get(String key) {
         String value = active.getString(key);
         if (value == null) value = fallback.getString(key);
+        if (value == null) value = bundled.getString(key);
         if (value == null) return key;
         return colorize(value);
     }
@@ -95,6 +112,9 @@ public class MessageService {
         List<String> list = active.getStringList(key);
         if (list.isEmpty()) {
             list = fallback.getStringList(key);
+        }
+        if (list.isEmpty()) {
+            list = bundled.getStringList(key);
         }
         return list.stream().map(this::colorize).toList();
     }

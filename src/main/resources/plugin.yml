@@ -25,3 +25,28 @@ commands:
     usage: "§c/terreno <comprar|listar|info|deletar|pvp|mobs|publico|tp>"
     permission: jocoterrenos.terreno
     permission-message: "§cVocê não tem permissão para usar este comando!"
+
+permissions:
+  jocoterrenos.terreno:
+    description: Permite usar o comando /terreno (comprar e gerenciar os próprios terrenos)
+    default: true
+  jocoterrenos.cercar:
+    description: Permite usar /cercar (ferramenta de teste, coloca cercas em qualquer lugar)
+    default: op
+  jocoterrenos.resizecerca:
+    description: Permite usar /resizecerca (ferramenta de teste)
+    default: op
+  jocoterrenos.removercerca:
+    description: Permite usar /removercerca (ferramenta de teste, remove cercas em qualquer lugar)
+    default: op
+  jocoterrenos.bypass:
+    description: Ignora a proteção dos terrenos (construir, quebrar e interagir em qualquer terreno)
+    default: op
+  jocoterrenos.admin:
+    description: Todas as permissões administrativas do JocoTerrenos
+    default: op
+    children:
+      jocoterrenos.cercar: true
+      jocoterrenos.resizecerca: true
+      jocoterrenos.removercerca: true
+      jocoterrenos.bypass: true

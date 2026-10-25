@@ -55,6 +55,12 @@ database:
     # Maximum time a connection can remain idle (in milliseconds)
     idle-timeout: 600000
 
+# Protection Settings
+protection:
+  # Minimum time between "you cannot do that here" messages sent to the same player (in milliseconds).
+  # Block interactions fire many times per second, so without it the chat would be flooded.
+  message-cooldown-ms: 1500
+
 # Land Settings
 lands:
   # Default land size (in blocks)

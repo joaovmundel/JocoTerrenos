@@ -1,6 +1,7 @@
 package io.github.joaovmundel.jocoTerrenos.repositories;
 
 import io.github.joaovmundel.jocoTerrenos.database.DatabaseManager;
+import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoMember;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoRole;
@@ -11,7 +12,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -143,6 +146,45 @@ public class TerrenoRepository {
         }
 
         return terrenos;
+    }
+
+    /**
+     * Loads every land with its members using two queries. Unlike {@link #findAll()} a failure is reported
+     * instead of looking like an empty database, which would leave every land unprotected.
+     *
+     * @throws StorageException if the database cannot be read or holds an unknown member role
+     */
+    public List<Terreno> loadAll() throws StorageException {
+        Map<Long, Terreno> terrenosById = new LinkedHashMap<>();
+
+        try (Connection conn = databaseManager.getConnection()) {
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT * FROM terrenos")) {
+                while (rs.next()) {
+                    Terreno terreno = mapResultSetToTerreno(rs);
+                    terrenosById.put(terreno.getId(), terreno);
+                }
+            }
+
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT * FROM terreno_members")) {
+                while (rs.next()) {
+                    Terreno terreno = terrenosById.get(rs.getLong("terreno_id"));
+                    if (terreno == null) {
+                        continue; // orphan row left behind by a delete (SQLite does not enforce the cascade)
+                    }
+                    TerrenoMember member = new TerrenoMember();
+                    member.setTerrenoId(terreno.getId());
+                    member.setMemberUUID(rs.getString("member_uuid"));
+                    member.setMemberRole(TerrenoRole.valueOf(rs.getString("member_role")));
+                    terreno.getMembers().add(member);
+                }
+            }
+        } catch (SQLException | IllegalArgumentException e) {
+            throw new StorageException("Não foi possível carregar os terrenos do banco de dados", e);
+        }
+
+        return new ArrayList<>(terrenosById.values());
     }
 
     /**

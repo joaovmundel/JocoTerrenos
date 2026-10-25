@@ -125,6 +125,11 @@ terreno.preco.min: '&cMinimum size: {min}'
 terreno.preco.max: '&cMaximum size: {max}'
 terreno.preco.valor: '&aPrice for land {size}x{size}: &e{price}'
 
+# Protection
+protection.denied: '&cThis land belongs to another player. You cannot do that here.'
+protection.pvp-disabled: '&cPvP is disabled on this land.'
+no-permission: '&cYou do not have permission to use this command!'
+
 errors:
   terreno:
     id-nao-encontrado: '&cLand not found for the given ID.'

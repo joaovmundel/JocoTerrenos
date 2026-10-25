@@ -126,6 +126,11 @@ terreno.preco.min: '&cTamanho mínimo: {min}'
 terreno.preco.max: '&cTamanho máximo: {max}'
 terreno.preco.valor: '&aPreço do terreno {size}x{size}: &e{price}'
 
+# Proteção
+protection.denied: '&cEste terreno pertence a outro jogador. Você não pode fazer isso aqui.'
+protection.pvp-disabled: '&cO PvP está desabilitado neste terreno.'
+no-permission: '&cVocê não tem permissão para usar este comando!'
+
 errors:
   terreno:
     id-nao-encontrado: '&cTerreno não encontrado pelo ID informado.'

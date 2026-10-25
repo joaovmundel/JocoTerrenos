@@ -1,10 +1,14 @@
 package io.github.joaovmundel.jocoTerrenos.service;
 
+import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.exceptions.TerrenoNotFoundException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
+import io.github.joaovmundel.jocoTerrenos.protection.Bounds;
+import io.github.joaovmundel.jocoTerrenos.protection.Claim;
+import io.github.joaovmundel.jocoTerrenos.protection.ClaimIndex;
+import io.github.joaovmundel.jocoTerrenos.protection.ClaimMapper;
 import io.github.joaovmundel.jocoTerrenos.repositories.TerrenoRepository;
 import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils;
-import io.github.joaovmundel.jocoTerrenos.utils.LocationUtils.LocationRaw;
 import io.github.joaovmundel.jocoTerrenos.utils.SafeLocationUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -12,21 +16,56 @@ import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 public class TerrenoService {
 
     private final TerrenoRepository repository;
     private final FileConfiguration config;
     private final MessageService messages;
+    private final ClaimIndex claimIndex;
+    private final Logger logger;
 
-    public TerrenoService(TerrenoRepository repository, FileConfiguration config, MessageService messages) {
+    public TerrenoService(TerrenoRepository repository, FileConfiguration config, MessageService messages,
+                          ClaimIndex claimIndex, Logger logger) {
         this.repository = repository;
         this.config = config;
         this.messages = messages;
+        this.claimIndex = claimIndex;
+        this.logger = logger;
+    }
+
+    /**
+     * Rebuilds the in-memory claim index from storage. Must succeed before the plugin protects anything:
+     * an index that silently came up empty would leave every land open.
+     *
+     * @throws StorageException if the lands cannot be read
+     */
+    public void reloadClaims() throws StorageException {
+        List<Claim> claims = new ArrayList<>();
+        for (Terreno terreno : repository.loadAll()) {
+            Claim claim = ClaimMapper.toClaim(terreno);
+            if (claim == null) {
+                logger.warning("Terreno ignorado na proteção por ter localização ou tamanho inválidos: id=" + terreno.getId());
+                continue;
+            }
+            claims.add(claim);
+        }
+        claimIndex.replaceAll(claims);
+    }
+
+    private void indexClaim(Terreno terreno) {
+        Claim claim = ClaimMapper.toClaim(terreno);
+        if (claim == null) {
+            logger.warning("Terreno sem proteção por ter localização ou tamanho inválidos: id=" + terreno.getId());
+            return;
+        }
+        claimIndex.put(claim);
     }
 
     /**
@@ -74,7 +113,10 @@ public class TerrenoService {
             return Optional.empty();
         }
         // Cria terreno
-        String location = LocationUtils.formatarLocalizacao(loc);
+        // Salva o centro do bloco: "%.2f" arredondaria 100.996 para 101.00 e a proteção usaria um bloco
+        // diferente daquele em que as cercas foram colocadas (FenceUtils usa getBlockX/getBlockZ).
+        Location blockCenter = new Location(loc.getWorld(), loc.getBlockX() + 0.5, loc.getY(), loc.getBlockZ() + 0.5);
+        String location = LocationUtils.formatarLocalizacao(blockCenter);
         Terreno terreno = new Terreno();
         terreno.setDonoUUID(donoUUID);
         terreno.setName(nomeTrim);
@@ -87,7 +129,9 @@ public class TerrenoService {
         if (created.isEmpty()) {
             // Reembolso em caso de falha
             economy.depositPlayer(player, custo);
+            return created;
         }
+        indexClaim(created.get());
         return created;
     }
 
@@ -132,7 +176,11 @@ public class TerrenoService {
             return false;
         }
 
-        return repository.delete(terreno.getId());
+        boolean deleted = repository.delete(terreno.getId());
+        if (deleted) {
+            claimIndex.remove(terreno.getId());
+        }
+        return deleted;
     }
 
     public boolean togglePvp(String name, String playerUUID) throws TerrenoNotFoundException {
@@ -187,71 +235,16 @@ public class TerrenoService {
      */
     public boolean isAreaDisponivel(Location center, int tamanho, int buffer) {
         if (center == null || center.getWorld() == null) return false;
-        String world = center.getWorld().getName();
-        double half = tamanho / 2.0;
-        double minX = center.getX() - half;
-        double maxX = center.getX() + half;
-        double minZ = center.getZ() - half;
-        double maxZ = center.getZ() + half;
-
-        List<Terreno> existentes = repository.findAll();
-        for (Terreno t : existentes) {
-            LocationRaw raw = LocationUtils.converterLocalizacaoRaw(t.getLocation());
-            if (raw == null || raw.worldName() == null) continue;
-            if (!world.equals(raw.worldName())) continue;
-            int size2 = t.getSize();
-            double half2 = size2 / 2.0;
-            double minX2 = raw.x() - half2;
-            double maxX2 = raw.x() + half2;
-            double minZ2 = raw.z() - half2;
-            double maxZ2 = raw.z() + half2;
-            // Checagem de colisão com "buffer" estrito (permite exatamente ‘buffer’ de distância)
-            boolean overlapX = (maxX + buffer > minX2) && (minX - buffer < maxX2);
-            boolean overlapZ = (maxZ + buffer > minZ2) && (minZ - buffer < maxZ2);
-            if (overlapX && overlapZ) {
-                return false;
-            }
-        }
-        return true;
+        Bounds area = Bounds.centeredOn(center.getBlockX(), center.getBlockZ(), tamanho);
+        return claimIndex.isAreaFree(center.getWorld().getName(), area, buffer);
     }
 
     /**
-     * Versão assíncrona para verificar disponibilidade de área sem bloquear a main thread.
-     * Faz snapshot mínimo do estado necessário (mundo, x, z) e processa o restante fora da thread do servidor.
+     * Same check as {@link #isAreaDisponivel}. It no longer needs a worker thread because it only reads the
+     * in-memory claim index; the future is kept so the purchase flow in the command does not change.
      */
     public CompletableFuture<Boolean> isAreaDisponivelAsync(Location center, int tamanho, int buffer) {
-        if (center == null || center.getWorld() == null) {
-            return CompletableFuture.completedFuture(false);
-        }
-        final String world = center.getWorld().getName();
-        final double cx = center.getX();
-        final double cz = center.getZ();
-        return CompletableFuture.supplyAsync(() -> {
-            double half = tamanho / 2.0;
-            double minX = cx - half;
-            double maxX = cx + half;
-            double minZ = cz - half;
-            double maxZ = cz + half;
-
-            List<Terreno> existentes = repository.findAll();
-            for (Terreno t : existentes) {
-                LocationRaw raw = LocationUtils.converterLocalizacaoRaw(t.getLocation());
-                if (raw == null || raw.worldName() == null) continue;
-                if (!world.equals(raw.worldName())) continue;
-                int size2 = t.getSize();
-                double half2 = size2 / 2.0;
-                double minX2 = raw.x() - half2;
-                double maxX2 = raw.x() + half2;
-                double minZ2 = raw.z() - half2;
-                double maxZ2 = raw.z() + half2;
-                boolean overlapX = (maxX + buffer > minX2) && (minX - buffer < maxX2);
-                boolean overlapZ = (maxZ + buffer > minZ2) && (minZ - buffer < maxZ2);
-                if (overlapX && overlapZ) {
-                    return false;
-                }
-            }
-            return true;
-        });
+        return CompletableFuture.completedFuture(isAreaDisponivel(center, tamanho, buffer));
     }
 
     private boolean toggleConfiguracao(String nome, String playerUUID, String tipo) throws TerrenoNotFoundException {
@@ -275,38 +268,32 @@ public class TerrenoService {
                 return false;
         }
 
-        return repository.update(t);
+        boolean updated = repository.update(t);
+        if (updated) {
+            indexClaim(t);
+        }
+        return updated;
     }
 
     /**
-     * Versão assíncrona que evita bloquear o thread principal.
-     * Busca terrenos no repositório e calcula os limites fora da main thread.
+     * Finds the land under the player. The position is resolved against the in-memory claim index (the same
+     * geometry the protection uses); only the full record is read from storage, off the main thread.
      * Nota: não chama APIs Bukkit fora da main thread.
      */
     public CompletableFuture<Terreno> getCurrentTerrenoAsync(Player p) {
         // Snapshot mínimo do estado do "player" na main thread
         Location playerLoc = p.getLocation();
         String playerWorld = playerLoc.getWorld() != null ? playerLoc.getWorld().getName() : null;
-        double playerX = playerLoc.getX();
-        double playerZ = playerLoc.getZ();
+        int playerX = playerLoc.getBlockX();
+        int playerZ = playerLoc.getBlockZ();
 
         return CompletableFuture.supplyAsync(() -> {
-            List<Terreno> terrenos = repository.findAll();
-            for (Terreno t : terrenos) {
-                LocationRaw raw = LocationUtils.converterLocalizacaoRaw(t.getLocation());
-                if (raw == null || raw.worldName() == null) continue;
-                if (!raw.worldName().equals(playerWorld)) continue;
-                int size = t.getSize();
-                double halfSize = size / 2.0;
-                double minX = raw.x() - halfSize;
-                double maxX = raw.x() + halfSize;
-                double minZ = raw.z() - halfSize;
-                double maxZ = raw.z() + halfSize;
-                if (playerX >= minX && playerX <= maxX && playerZ >= minZ && playerZ <= maxZ) {
-                    return t;
-                }
+            Claim claim = playerWorld == null ? null : claimIndex.findAt(playerWorld, playerX, playerZ);
+            if (claim == null) {
+                throw new RuntimeException(new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado")));
             }
-            throw new RuntimeException(new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado")));
+            return repository.findById(claim.getId()).orElseThrow(
+                    () -> new RuntimeException(new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado"))));
         });
     }
 

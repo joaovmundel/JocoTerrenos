@@ -7,7 +7,22 @@ Sistema de gerenciamento de terrenos para servidores Minecraft (Spigot/Paper). P
 - Listagem e visualização de informações do terreno atual ou por nome
 - Configurações por terreno: PvP, Mobs e Acesso Público
 - Teleporte para um local seguro dentro do terreno
+- Proteção dos terrenos (construir, quebrar, abrir baús, balde, fogo, explosões, líquidos, pistões, PvP e mobs)
 - Persistência em banco de dados com HikariCP (SQLite/MySQL/PostgreSQL)
+
+## Proteção
+Quem não é dono nem membro do terreno não consegue construir, quebrar, abrir baús, usar baldes, acender fogo nem
+mexer em animais, molduras e armor stands dentro dele. Explosões, fogo, líquidos vindos de fora e pistões que
+atravessam a borda também não afetam o terreno.
+
+- **PvP** (`/terreno pvp`): desligado, ninguém causa dano em jogadores quando atacante ou vítima está no terreno.
+- **Mobs** (`/terreno mobs`): desligado, monstros não nascem no terreno (ovos de spawn e comandos continuam funcionando).
+- **Público** (`/terreno publico`): visitantes podem usar portas, alçapões, portões, botões, alavancas e placas de
+  pressão, mas não construir nem abrir baús.
+- **Membros** (papéis `OWNER`, `ADMIN`, `MEMBER`) constroem como o dono. Ainda não há comando para adicionar membros.
+- Os terrenos ficam em um índice em memória, carregado ao iniciar. Se o banco não puder ser lido, o plugin se
+  desabilita em vez de rodar sem proteção.
+- Limite conhecido: dispensers, funis, poções arremessadas e crescimento de árvores/estruturas ainda não são tratados.
 
 ## Compatibilidade
 - Servidores: Spigot/Paper (versão da API conforme pom.xml do projeto)
@@ -92,7 +107,12 @@ Terrenos (`/terreno`):
 <!-- Comandos de cerca são internos ao desenvolvimento e permanecem ocultos no README -->
 
 ## Permissões
-As permissões dos comandos de terreno podem ser configuradas conforme necessidade do servidor. Atualmente, o controle principal é por propriedade do terreno.
+| Permissão | Padrão | Efeito |
+|---|---|---|
+| `jocoterrenos.terreno` | todos | Usar `/terreno` (comprar e gerenciar os próprios terrenos) |
+| `jocoterrenos.bypass` | OP | Ignorar a proteção de qualquer terreno |
+| `jocoterrenos.cercar`, `jocoterrenos.resizecerca`, `jocoterrenos.removercerca` | OP | Comandos de teste de cercas, que mexem no mundo em qualquer lugar |
+| `jocoterrenos.admin` | OP | Todas as permissões administrativas acima |
 
 ## Estrutura do banco de dados
 Tabela: `terrenos`
@@ -146,8 +166,8 @@ Arquivos de recursos:
 - Teleporte inseguro: use `/terreno tp [nome]` para garantir tentativa de posição segura; ajuste lógica em `SafeLocationUtils` conforme seu servidor.
 
 ## Roadmap
-- Proteção física das áreas (flag de interação/rompimento)
-- Permissões por terreno (membros/roles mais granulares)
+- Comandos de membros (adicionar, remover, papéis) e transferência de terreno
+- Proteção contra dispensers, funis, poções e crescimento de estruturas
 - GUI para gerenciamento
 - Integração com economia (Vault)
 - Limites por jogador e taxa/aluguel

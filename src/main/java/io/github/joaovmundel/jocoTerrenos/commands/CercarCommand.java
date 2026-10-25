@@ -9,7 +9,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class CercarCommand implements CommandExecutor {
-    
+
+    private static final String PERMISSION = "jocoterrenos.cercar";
+
     private final MessageService messages;
 
     public CercarCommand(MessageService messages) {
@@ -18,6 +20,11 @@ public class CercarCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!sender.hasPermission(PERMISSION)) {
+            messages.send(sender, "no-permission");
+            return true;
+        }
+
         if (!(sender instanceof Player player)) {
             messages.send(sender, "only-player");
             return true;

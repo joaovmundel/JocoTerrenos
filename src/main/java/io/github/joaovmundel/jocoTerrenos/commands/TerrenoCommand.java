@@ -28,6 +28,8 @@ import java.util.concurrent.CompletableFuture;
 public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private final JocoTerrenos plugin;
+    private static final String PERMISSION = "jocoterrenos.terreno";
+
     private final JocoLogging logger = new JocoLogging(this.getClass().getName());
     private final TerrenoService terrenoService;
     private static final List<String> SUB_COMMANDS = Arrays.asList("comprar", "preco", "listar", "info", "deletar", "pvp", "mobs", "publico", "tp");
@@ -39,6 +41,11 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!sender.hasPermission(PERMISSION)) {
+            plugin.getMessageService().send(sender, "no-permission");
+            return true;
+        }
+
         if (!(sender instanceof Player player)) {
             plugin.getMessageService().send(sender, "only-player");
             return true;
