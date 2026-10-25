@@ -7,29 +7,29 @@ depend: [Vault]
 
 commands:
   cercar:
-    description: Coloca cercas delimitando uma área com o jogador no centro
-    usage: /cercar <área_em_m²>
+    description: Coloca cercas delimitando uma area com o jogador no centro
+    usage: /cercar <area_em_m2>
     permission: jocoterrenos.cercar
-    permission-message: Você não tem permissão para usar este comando!
+    permission-message: Voce nao tem permissao para usar este comando!
   resizecerca:
-    description: Redimensiona uma área de cercas existente
+    description: Redimensiona uma area de cercas existente
     usage: /resizecerca <tamanho_antigo> <tamanho_novo>
     permission: jocoterrenos.resizecerca
-    permission-message: Você não tem permissão para usar este comando!
+    permission-message: Voce nao tem permissao para usar este comando!
   removercerca:
-    description: Remove cercas de uma área
+    description: Remove cercas de uma area
     usage: /removercerca <tamanho>
     permission: jocoterrenos.removercerca
-    permission-message: Você não tem permissão para usar este comando!
+    permission-message: Voce nao tem permissao para usar este comando!
   terreno:
     description: Gerencia terrenos
-    usage: "§c/terreno <comprar|preco|listar|info|deletar|pvp|mobs|publico|tp>"
+    usage: /terreno <comprar|preco|listar|info|deletar|pvp|mobs|publico|tp>
     permission: jocoterrenos.terreno
-    permission-message: "§cVocê não tem permissão para usar este comando!"
+    permission-message: Voce nao tem permissao para usar este comando!
 
 permissions:
   jocoterrenos.terreno:
-    description: Permite usar o comando /terreno (comprar e gerenciar os próprios terrenos)
+    description: Permite usar o comando /terreno (comprar e gerenciar os proprios terrenos)
     default: true
   jocoterrenos.cercar:
     description: Permite usar /cercar (ferramenta de teste, coloca cercas em qualquer lugar)
@@ -41,10 +41,10 @@ permissions:
     description: Permite usar /removercerca (ferramenta de teste, remove cercas em qualquer lugar)
     default: op
   jocoterrenos.bypass:
-    description: Ignora a proteção dos terrenos (construir, quebrar e interagir em qualquer terreno)
+    description: Ignora a protecao dos terrenos (construir, quebrar e interagir em qualquer terreno)
     default: op
   jocoterrenos.admin:
-    description: Todas as permissões administrativas do JocoTerrenos
+    description: Todas as permissoes administrativas do JocoTerrenos
     default: op
     children:
       jocoterrenos.cercar: true

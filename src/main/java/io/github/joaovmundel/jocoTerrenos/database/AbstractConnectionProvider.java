@@ -24,7 +24,7 @@ abstract class AbstractConnectionProvider implements ConnectionProvider {
             if (isUsable(connection)) {
                 return connection;
             }
-            logger.warning("A conexão com o banco de dados foi perdida; reconectando...");
+            logger.warning("A conexao com o banco de dados foi perdida; reconectando...");
             closeQuietly();
         }
         connection = open();
@@ -49,7 +49,7 @@ abstract class AbstractConnectionProvider implements ConnectionProvider {
         try {
             connection.close();
         } catch (SQLException exception) {
-            logger.log(Level.FINE, "Erro ao fechar a conexão (ignorado)", exception);
+            logger.log(Level.FINE, "Erro ao fechar a conexao (ignorado)", exception);
         } finally {
             connection = null;
         }

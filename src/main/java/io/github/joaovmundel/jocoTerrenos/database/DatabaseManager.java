@@ -42,7 +42,7 @@ public class DatabaseManager {
             Schema.create(candidate.get(), dialect);
         } catch (SQLException e) {
             candidate.close();
-            throw new StorageException("Não foi possível abrir o banco de dados " + dialect, e);
+            throw new StorageException("Nao foi possivel abrir o banco de dados " + dialect, e);
         }
         this.provider = candidate;
         logger.fine("Banco de dados " + dialect + " pronto.");
@@ -53,8 +53,8 @@ public class DatabaseManager {
         try {
             return Schema.Dialect.valueOf(configured);
         } catch (IllegalArgumentException e) {
-            logger.warning("Tipo de banco de dados inválido em database.type: " + configured
-                    + ". Use SQLITE ou MYSQL. Usando SQLite como padrão.");
+            logger.warning("Tipo de banco de dados invalido em database.type: " + configured
+                    + ". Use SQLITE ou MYSQL. Usando SQLite como padrao.");
             return Schema.Dialect.SQLITE;
         }
     }
@@ -95,7 +95,7 @@ public class DatabaseManager {
         if (provider != null) {
             provider.close();
             provider = null;
-            logger.fine("Conexão com o banco de dados fechada com sucesso!");
+            logger.fine("Conexao com o banco de dados fechada com sucesso!");
         }
     }
 }

@@ -52,7 +52,7 @@ public class TerrenoService {
         for (Terreno terreno : repository.loadAll()) {
             Claim claim = ClaimMapper.toClaim(terreno);
             if (claim == null) {
-                logger.warning("Terreno ignorado na proteção por ter localização ou tamanho inválidos: id=" + terreno.getId());
+                logger.warning("Terreno ignorado na protecao por ter localizacao ou tamanho invalidos: id=" + terreno.getId());
                 continue;
             }
             claims.add(claim);
@@ -63,7 +63,7 @@ public class TerrenoService {
     private void indexClaim(Terreno terreno) {
         Claim claim = ClaimMapper.toClaim(terreno);
         if (claim == null) {
-            logger.warning("Terreno sem proteção por ter localização ou tamanho inválidos: id=" + terreno.getId());
+            logger.warning("Terreno sem protecao por ter localizacao ou tamanho invalidos: id=" + terreno.getId());
             return;
         }
         claimIndex.put(claim);

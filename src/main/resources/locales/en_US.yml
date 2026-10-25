@@ -23,7 +23,7 @@ help.lines:
   - '&7/terreno tp [name] &f- Teleport to a safe spot inside the land'
 
 # Fences
-cercar.usage: '&cUsage: /cercar <area_in_m²>'
+cercar.usage: '&cUsage: /cercar <area_in_m2>'
 removercerca.usage: '&cUsage: /removercerca <size>'
 removercerca.example1: '&7Example: /removercerca 10'
 removercerca.example2: '&7This will remove fences around a 10x10 area around you'
@@ -32,8 +32,8 @@ resizecerca.example1: '&7Example: /resizecerca 10 20'
 resizecerca.example2: '&7This will resize a 10x10 area to 20x20'
 resizecerca.iguais: '&cThe sizes are equal! No changes needed.'
 
-fences.removed.success: '&aFences removed successfully!\n&7Area: {size}x{size} blocks ({area}m²)\n&7Total fences removed: {count}'
-fences.resize.success: '&aArea {acao} successfully!\n&7Old size: {old}x{old} ({oldArea}m²)\n&7New size: {new}x{new} ({newArea}m²)\n&7Fences removed: {removed}\n&7Fences placed: {placed}'
+fences.removed.success: '&aFences removed successfully!\n&7Area: {size}x{size} blocks ({area}m2)\n&7Total fences removed: {count}'
+fences.resize.success: '&aArea {acao} successfully!\n&7Old size: {old}x{old} ({oldArea}m2)\n&7New size: {new}x{new} ({newArea}m2)\n&7Fences removed: {removed}\n&7Fences placed: {placed}'
 action.expandida: 'expanded'
 action.reduzida: 'reduced'
 

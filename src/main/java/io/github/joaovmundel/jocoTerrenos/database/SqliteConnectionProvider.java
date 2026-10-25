@@ -22,13 +22,13 @@ public final class SqliteConnectionProvider extends AbstractConnectionProvider {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException exception) {
-            throw new SQLException("Driver SQLite (org.sqlite.JDBC) não encontrado. O servidor deveria trazê-lo; "
+            throw new SQLException("Driver SQLite (org.sqlite.JDBC) nao encontrado. O servidor deveria traze-lo; "
                     + "use o MySQL ou instale o driver.", exception);
         }
 
         File parent = file.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            throw new SQLException("Não foi possível criar a pasta " + parent.getPath());
+            throw new SQLException("Nao foi possivel criar a pasta " + parent.getPath());
         }
 
         Connection connection = DriverManager.getConnection("jdbc:sqlite:" + file.getPath().replace('\\', '/'));

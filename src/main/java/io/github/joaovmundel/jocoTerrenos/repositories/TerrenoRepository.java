@@ -186,7 +186,7 @@ public class TerrenoRepository {
                 }
             }
         } catch (SQLException | IllegalArgumentException e) {
-            throw new StorageException("Não foi possível carregar os terrenos do banco de dados", e);
+            throw new StorageException("Nao foi possivel carregar os terrenos do banco de dados", e);
         }
 
         return new ArrayList<Terreno>(terrenosById.values());
@@ -342,7 +342,7 @@ public class TerrenoRepository {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Erro ao verificar existência de nome: " + nome + " para dono: " + donoNome, e);
+            logger.log(Level.SEVERE, "Erro ao verificar existencia de nome: " + nome + " para dono: " + donoNome, e);
         }
         return false;
     }

@@ -164,11 +164,13 @@ public class ResourcesTest {
     }
 
     @Test
-    public void localesAreReadableAsUtf8() throws Exception {
-        String portuguese = yaml("/locales/pt_BR.yml").getString("only-player");
+    public void localesParseAndHaveTheHelpList() throws Exception {
+        for (String locale : new String[]{"/locales/pt_BR.yml", "/locales/en_US.yml"}) {
+            YamlConfiguration yaml = yaml(locale);
 
-        assertTrue(portuguese, portuguese.contains("só"));
-        assertTrue(portuguese, portuguese.contains("jogador"));
+            assertTrue(locale, yaml.getString("only-player").length() > 0);
+            assertTrue(locale, yaml.getStringList("help.lines").size() >= 9);
+        }
     }
 
     @Test

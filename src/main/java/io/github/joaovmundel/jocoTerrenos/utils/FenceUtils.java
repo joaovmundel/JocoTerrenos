@@ -29,7 +29,7 @@ public class FenceUtils {
      */
     public static void colocarCercas(Player player, double areaM2) {
         if (areaM2 <= 0) {
-            logger.warning(player.getName() + " Tentativa de colocar cercas com área inválida: " + areaM2);
+            logger.warning(player.getName() + " Tentativa de colocar cercas com area invalida: " + areaM2);
             return;
         }
 

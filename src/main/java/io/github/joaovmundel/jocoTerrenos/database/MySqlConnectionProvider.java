@@ -35,15 +35,15 @@ public final class MySqlConnectionProvider extends AbstractConnectionProvider {
         try {
             Class.forName("com.mysql.jdbc.Driver");
         } catch (ClassNotFoundException exception) {
-            throw new SQLException("Driver MySQL (com.mysql.jdbc.Driver) não encontrado. O servidor deveria "
-                    + "trazê-lo; use o SQLite ou instale o driver.", exception);
+            throw new SQLException("Driver MySQL (com.mysql.jdbc.Driver) nao encontrado. O servidor deveria "
+                    + "traze-lo; use o SQLite ou instale o driver.", exception);
         }
 
         String url = "jdbc:mysql://" + host + ":" + port + "/" + database
                 + "?useUnicode=true&characterEncoding=UTF-8&connectTimeout=" + CONNECT_TIMEOUT_MS
                 + "&socketTimeout=" + SOCKET_TIMEOUT_MS;
         Connection connection = DriverManager.getConnection(url, username, password);
-        logger.fine("Conexão com o MySQL estabelecida (" + host + ":" + port + "/" + database + ").");
+        logger.fine("Conexao com o MySQL estabelecida (" + host + ":" + port + "/" + database + ").");
         return connection;
     }
 

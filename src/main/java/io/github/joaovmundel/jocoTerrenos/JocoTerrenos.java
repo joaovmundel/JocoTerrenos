@@ -52,7 +52,7 @@ public final class JocoTerrenos extends JavaPlugin {
         try {
             databaseManager.initialize();
         } catch (StorageException e) {
-            abortStartup("Banco de dados indisponível; sem ele os terrenos ficariam sem proteção.", e);
+            abortStartup("Banco de dados indisponivel; sem ele os terrenos ficariam sem protecao.", e);
             return;
         }
 
@@ -66,10 +66,10 @@ public final class JocoTerrenos extends JavaPlugin {
         try {
             terrenoService.reloadClaims();
         } catch (StorageException e) {
-            abortStartup("Não foi possível carregar os terrenos; sem eles nada seria protegido.", e);
+            abortStartup("Nao foi possivel carregar os terrenos; sem eles nada seria protegido.", e);
             return;
         }
-        getLogger().info(claimIndex.size() + " terreno(s) carregado(s) na proteção.");
+        getLogger().info(claimIndex.size() + " terreno(s) carregado(s) na protecao.");
 
         protectionService = new ProtectionService(claimIndex, messageService,
                 getConfig().getLong("protection.message-cooldown-ms", DEFAULT_MESSAGE_COOLDOWN_MILLIS));
@@ -84,7 +84,7 @@ public final class JocoTerrenos extends JavaPlugin {
         Objects.requireNonNull(getCommand("terreno")).setTabCompleter(terrenoCmd);
 
         if (!economy.isAvailable()) {
-            getLogger().warning("Nenhuma economia registrada no Vault ainda; as compras de terreno ficam indisponíveis até uma ser registrada.");
+            getLogger().warning("Nenhuma economia registrada no Vault ainda; as compras de terreno ficam indisponiveis ate uma ser registrada.");
         }
         getLogger().info("JocoTerrenos habilitado com sucesso!");
     }
@@ -108,7 +108,7 @@ public final class JocoTerrenos extends JavaPlugin {
 
     /** Fails fast: a plugin that cannot protect lands must not keep selling them. */
     private void abortStartup(String message, Exception cause) {
-        getLogger().log(Level.SEVERE, message + " O plugin será desabilitado.", cause);
+        getLogger().log(Level.SEVERE, message + " O plugin sera desabilitado.", cause);
         getServer().getPluginManager().disablePlugin(this);
     }
 }

@@ -259,7 +259,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
             if (!success) {
                 messages.send(player, "terreno.toggle.erro");
-                logger.warning("Erro ao atualizar configuração do terreno para " + toggle);
+                logger.warning("Erro ao atualizar configuracao do terreno para " + toggle);
                 logger.warning("Jogador: " + player.getName() + " - Terreno: " + nome);
                 return true;
             }

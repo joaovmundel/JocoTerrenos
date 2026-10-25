@@ -75,7 +75,7 @@ public class MessageService {
         try {
             return parse(Files.readAllBytes(file.toPath()), file.getName());
         } catch (IOException e) {
-            logger.warning("Não foi possível ler " + file.getName() + ": " + e.getMessage());
+            logger.warning("Nao foi possivel ler " + file.getName() + ": " + e.getMessage());
             return null;
         }
     }
@@ -88,7 +88,7 @@ public class MessageService {
         try {
             return parse(readAll(in), code + ".yml (embutido)");
         } catch (IOException e) {
-            logger.warning("Não foi possível ler os textos embutidos de " + code + ": " + e.getMessage());
+            logger.warning("Nao foi possivel ler os textos embutidos de " + code + ": " + e.getMessage());
             return null;
         } finally {
             closeQuietly(in);
@@ -100,7 +100,7 @@ public class MessageService {
         try {
             yaml.loadFromString(new String(content, UTF_8));
         } catch (InvalidConfigurationException e) {
-            logger.warning("YAML inválido em " + name + ": " + e.getMessage());
+            logger.warning("YAML invalido em " + name + ": " + e.getMessage());
             return null;
         }
         return yaml;
