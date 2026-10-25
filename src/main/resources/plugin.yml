@@ -23,7 +23,7 @@ commands:
     permission-message: Voce nao tem permissao para usar este comando!
   terreno:
     description: Gerencia terrenos
-    usage: /terreno <comprar|preco|listar|info|deletar|pvp|mobs|publico|tp>
+    usage: /terreno <comprar|preco|listar|info|deletar|pvp|mobs|publico|tp|vender|cancelarvenda|adquirir|vendas>
     permission: jocoterrenos.terreno
     permission-message: Voce nao tem permissao para usar este comando!
 

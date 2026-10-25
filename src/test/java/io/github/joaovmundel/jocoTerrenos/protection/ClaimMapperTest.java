@@ -76,6 +76,16 @@ public class ClaimMapperTest {
     }
 
     @Test
+    public void aSalePriceMakesTheClaimForSale() {
+        Terreno terreno = terreno("world:0.50:64.00:0.50", 5);
+        assertFalse(ClaimMapper.toClaim(terreno).isForSale());
+
+        terreno.setSalePrice(new java.math.BigDecimal("1500.00"));
+
+        assertTrue(ClaimMapper.toClaim(terreno).isForSale());
+    }
+
+    @Test
     public void missingFlagsDefaultToFalse() {
         Terreno terreno = terreno("world:0.50:64.00:0.50", 5);
         terreno.setPvp(null);

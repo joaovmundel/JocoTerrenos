@@ -1,16 +1,19 @@
 package io.github.joaovmundel.jocoTerrenos.repositories;
 
 import io.github.joaovmundel.jocoTerrenos.database.ConnectionProvider;
+import io.github.joaovmundel.jocoTerrenos.economy.SalePrice;
 import io.github.joaovmundel.jocoTerrenos.exceptions.StorageException;
 import io.github.joaovmundel.jocoTerrenos.models.Terreno;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoMember;
 import io.github.joaovmundel.jocoTerrenos.models.TerrenoRole;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,8 +33,12 @@ import java.util.logging.Logger;
 public class TerrenoRepository {
 
     private static final String INSERT_TERRENO = "INSERT INTO terrenos "
-            + "(dono_nome, name, db_name_key, location, size, pvp, mobs, public_access, created_at, updated_at) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + "(dono_nome, name, db_name_key, location, size, pvp, mobs, public_access, created_at, updated_at, sale_price_cents) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    private static final String UPDATE_TERRENO = "UPDATE terrenos SET dono_nome = ?, name = ?, db_name_key = ?, "
+            + "location = ?, size = ?, pvp = ?, mobs = ?, public_access = ?, updated_at = ?, sale_price_cents = ? "
+            + "WHERE id = ?";
 
     private final ConnectionProvider connections;
     private final Logger logger;
@@ -68,6 +75,7 @@ public class TerrenoRepository {
                 stmt.setBoolean(8, terreno.getPublicAccess());
                 stmt.setLong(9, now);
                 stmt.setLong(10, now);
+                bindSalePrice(stmt, 11, terreno.getSalePrice());
 
                 if (stmt.executeUpdate() > 0) {
                     try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
@@ -196,31 +204,121 @@ public class TerrenoRepository {
      * Atualiza um terreno existente
      */
     public boolean update(Terreno terreno) {
-        String sql = "UPDATE terrenos SET dono_nome = ?, name = ?, db_name_key = ?, location = ?, size = ?, "
-                + "pvp = ?, mobs = ?, public_access = ?, updated_at = ? WHERE id = ?";
         try {
-            Connection connection = connections.get();
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setString(1, terreno.getDonoNome());
-                stmt.setString(2, terreno.getName());
-                stmt.setString(3, nameKey(terreno.getDonoNome(), terreno.getName()));
-                stmt.setString(4, terreno.getLocation());
-                stmt.setInt(5, terreno.getSize());
-                stmt.setBoolean(6, terreno.getPvp());
-                stmt.setBoolean(7, terreno.getMobs());
-                stmt.setBoolean(8, terreno.getPublicAccess());
-                stmt.setLong(9, System.currentTimeMillis());
-                stmt.setLong(10, terreno.getId());
-
-                if (stmt.executeUpdate() > 0) {
-                    logger.fine("Terreno atualizado: " + terreno.getId());
-                    return true;
-                }
+            if (updateRow(connections.get(), terreno)) {
+                logger.fine("Terreno atualizado: " + terreno.getId());
+                return true;
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Erro ao atualizar terreno: " + terreno.getId(), e);
         }
         return false;
+    }
+
+    private boolean updateRow(Connection connection, Terreno terreno) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(UPDATE_TERRENO)) {
+            stmt.setString(1, terreno.getDonoNome());
+            stmt.setString(2, terreno.getName());
+            stmt.setString(3, nameKey(terreno.getDonoNome(), terreno.getName()));
+            stmt.setString(4, terreno.getLocation());
+            stmt.setInt(5, terreno.getSize());
+            stmt.setBoolean(6, terreno.getPvp());
+            stmt.setBoolean(7, terreno.getMobs());
+            stmt.setBoolean(8, terreno.getPublicAccess());
+            stmt.setLong(9, System.currentTimeMillis());
+            bindSalePrice(stmt, 10, terreno.getSalePrice());
+            stmt.setLong(11, terreno.getId());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Saves a land that changed hands: the new owner, name and flags, and no members, all or nothing. The old
+     * members belong to the old owner's trust and must not follow the land to its new owner.
+     *
+     * @return whether the land was updated; on {@code false} nothing changed in the database
+     */
+    public boolean transferOwnership(Terreno terreno) {
+        Connection connection;
+        try {
+            connection = connections.get();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao transferir terreno: " + terreno.getId(), e);
+            return false;
+        }
+
+        boolean previousAutoCommit = true;
+        try {
+            previousAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            boolean updated = updateRow(connection, terreno);
+            if (updated) {
+                try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM terreno_members WHERE terreno_id = ?")) {
+                    stmt.setLong(1, terreno.getId());
+                    stmt.executeUpdate();
+                }
+                connection.commit();
+                terreno.getMembers().clear();
+                logger.fine("Terreno transferido: " + terreno.getId() + " -> " + terreno.getDonoNome());
+                return true;
+            }
+            connection.rollback();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao transferir terreno: " + terreno.getId(), e);
+            rollbackQuietly(connection);
+        } finally {
+            restoreAutoCommit(connection, previousAutoCommit);
+        }
+        return false;
+    }
+
+    private void rollbackQuietly(Connection connection) {
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Nao foi possivel desfazer a transacao", e);
+        }
+    }
+
+    private void restoreAutoCommit(Connection connection, boolean autoCommit) {
+        try {
+            connection.setAutoCommit(autoCommit);
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, "Nao foi possivel restaurar o auto-commit da conexao", e);
+        }
+    }
+
+    /** Stores the price as whole cents, or NULL when the land is not for sale. */
+    private static void bindSalePrice(PreparedStatement stmt, int index, BigDecimal price) throws SQLException {
+        if (price == null) {
+            stmt.setNull(index, Types.BIGINT);
+        } else {
+            stmt.setLong(index, SalePrice.toCents(price));
+        }
+    }
+
+    /**
+     * Terrenos que estao a venda, do mais barato para o mais caro
+     *
+     * @param limit how many to return at most
+     */
+    public List<Terreno> findForSale(int limit) {
+        List<Terreno> terrenos = new ArrayList<Terreno>();
+        String sql = "SELECT * FROM terrenos WHERE sale_price_cents IS NOT NULL ORDER BY sale_price_cents ASC, id ASC LIMIT ?";
+        try {
+            Connection connection = connections.get();
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setInt(1, limit);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        terrenos.add(mapResultSetToTerreno(rs));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Erro ao listar terrenos a venda", e);
+        }
+        return terrenos;
     }
 
     /**
@@ -357,6 +455,8 @@ public class TerrenoRepository {
         terreno.setPvp(rs.getBoolean("pvp"));
         terreno.setMobs(rs.getBoolean("mobs"));
         terreno.setPublicAccess(rs.getBoolean("public_access"));
+        long salePriceCents = rs.getLong("sale_price_cents");
+        terreno.setSalePrice(rs.wasNull() ? null : SalePrice.fromCents(salePriceCents));
         return terreno;
     }
 

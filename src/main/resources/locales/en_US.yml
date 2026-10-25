@@ -6,7 +6,7 @@
 #
 # Do not change locale-version. When a newer plugin version ships new texts, this file is kept as
 # en_US.yml.vN.bak and replaced by the new one; copy your changes from the .bak if you want to keep them.
-locale-version: 2
+locale-version: 3
 
 prefix: '&8[&6Lands&8]&r '
 
@@ -28,6 +28,10 @@ help.lines:
   - '&6/terreno mobs &e<name> &8- &7Turn &cmobs &7on or off'
   - '&6/terreno publico &e<name> &8- &7Open or close the land to &avisitors'
   - '&6/terreno tp &e<name> &8- &7Teleport to the land'
+  - '&6/terreno vender &e<name> <price> &8- &7Put the land &dfor sale'
+  - '&6/terreno cancelarvenda &e<name> &8- &7Take the land off the market'
+  - '&6/terreno vendas &8- &7List the lands &dfor sale'
+  - '&6/terreno adquirir &e[owner] [name] &8- &7Buy a land that is &dfor sale'
   - '&6/terreno deletar &e<name> &8- &7Delete the land and its fences'
 
 # Fences (test tools, admins only)
@@ -63,7 +67,8 @@ terreno.comprar.area-indisponivel: '{prefix}&cArea unavailable! The land must be
 # List
 terreno.listar.vazio: '{prefix}&7You do not own any land yet. Use &6/terreno comprar&7.'
 terreno.listar.titulo: '&8----- &6&lYour lands &8-----'
-terreno.listar.linha: '&8#&7{id} &b{name} &8| &f{size}&7x&f{size} &8| &7PvP {pvp} &8| &7Mobs {mobs}'
+terreno.listar.linha: '&8#&7{id} &b{name} &8| &f{size}&7x&f{size} &8| &7PvP {pvp} &8| &7Mobs {mobs}{sale}'
+terreno.listar.venda: ' &8| &dFor sale &6{price}'
 
 # Info
 terreno.info.nao-no-terreno: '{prefix}&7You are not inside any land.'
@@ -76,6 +81,9 @@ terreno.info.pvp: '&7PvP: {pvp}'
 terreno.info.mobs: '&7Mobs: {mobs}'
 terreno.info.publico: '&7Visitor entry: {public}'
 terreno.info.membros: '&7Members: &f{count}'
+terreno.info.venda: '&7Sale: {sale}'
+terreno.info.venda-sim: '&dFor sale for &6{price}'
+terreno.info.venda-nao: '&8Not for sale'
 
 # Delete
 terreno.deletar.usage: '{prefix}&cUsage: &6/terreno deletar &e<name>'
@@ -111,6 +119,33 @@ terreno.preco.usage2: '&7Example: &6/terreno preco &e10'
 terreno.preco.min: '{prefix}&cMinimum size: &e{min}'
 terreno.preco.max: '{prefix}&cMaximum size: &e{max}'
 terreno.preco.valor: '{prefix}&7Land of &f{size}&7x&f{size}&7: &6{price}'
+
+# Sale
+terreno.vender.usage1: '{prefix}&cUsage: &6/terreno vender &e<name> <price>'
+terreno.vender.usage2: '&7Example: &6/terreno vender &bhouse &e50000'
+terreno.vender.valor-invalido: '{prefix}&cInvalid price. Use a number above zero, with up to 2 decimals, of at most &e{max}&c.'
+terreno.vender.sucesso: '{prefix}&aThe land &b{name} &ais for sale for &6{price}&a.'
+terreno.vender.dica: '&7To buy it: &6/terreno adquirir &e{owner} {name}&7. To withdraw it: &6/terreno cancelarvenda &e{name}&7.'
+terreno.vender.aviso-entrada: '&7While it is for sale, any player can walk in to look at the land.'
+terreno.cancelarvenda.usage: '{prefix}&cUsage: &6/terreno cancelarvenda &e<name>'
+terreno.cancelarvenda.sucesso: '{prefix}&aThe land &b{name} &ais no longer for sale.'
+terreno.cancelarvenda.nao-esta-a-venda: '{prefix}&cThe land &b{name} &cis not for sale.'
+terreno.adquirir.usage1: '{prefix}&cUsage: &6/terreno adquirir &e<owner> <name>'
+terreno.adquirir.usage2: '&7Or stand inside the land and just use &6/terreno adquirir&7.'
+terreno.adquirir.nao-a-venda: '{prefix}&cThis land is not for sale.'
+terreno.adquirir.proprio: '{prefix}&cThis land is already yours.'
+terreno.adquirir.saldo-insuficiente: '{prefix}&cNot enough money. The land costs &6{price}&c.'
+terreno.adquirir.economia-indisponivel: '{prefix}&cThe economy is unavailable right now. Try again later.'
+terreno.adquirir.nome-em-uso: '{prefix}&cYou already have lands called &b{name} &cand every numbered variation. Rename or delete one of them first.'
+terreno.adquirir.erro-pagamento: '{prefix}&cThe payment could not be completed. Nothing was charged.'
+terreno.adquirir.erro-salvar: '{prefix}&cThe land could not be transferred. Your money was returned.'
+terreno.adquirir.sucesso: '{prefix}&aYou bought the land &b{name} &afrom &e{seller} &afor &6{price}&a.'
+terreno.adquirir.renomeado: '&7You already had a land with that name, so this one is now called &b{name}&7.'
+terreno.adquirir.aviso-vendedor: '{prefix}&e{buyer} &abought your land &b{name} &afor &6{price}&a.'
+terreno.vendas.vazio: '{prefix}&7No land is for sale right now.'
+terreno.vendas.titulo: '&8----- &6&lLands for sale &8-----'
+terreno.vendas.linha: '&8#&7{id} &b{name} &8| &e{owner} &8| &f{size}&7x&f{size} &8| &6{price} &8| &7{where}'
+terreno.vendas.rodape: '&7Buy with &6/terreno adquirir &e<owner> <name>&7, or from inside the land with &6/terreno adquirir&7.'
 
 # Protection
 protection.denied: '{prefix}&cThis land belongs to &e{owner}&c. You cannot do that here.'

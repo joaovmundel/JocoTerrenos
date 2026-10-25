@@ -17,7 +17,7 @@ public class ClaimTest {
     private static final String STRANGER = "stranger-uuid";
 
     private static Claim claim(boolean publicAccess, Map<String, TerrenoRole> members) {
-        return new Claim(1L, OWNER, "world", new Bounds(0, 10, 0, 10), false, true, publicAccess, members);
+        return new Claim(1L, OWNER, "world", new Bounds(0, 10, 0, 10), false, true, publicAccess, false, members);
     }
 
     @Test
@@ -84,8 +84,19 @@ public class ClaimTest {
         assertTrue(claim.allowsEntry(STRANGER));
     }
 
+    @Test
+    public void aLandForSaleCanBeVisitedButNotBuiltOn() {
+        Claim forSale = new Claim(1L, OWNER, "world", new Bounds(0, 10, 0, 10), false, true, false, true,
+                Collections.<String, TerrenoRole>emptyMap());
+
+        assertTrue(forSale.isForSale());
+        assertTrue(forSale.allowsEntry(STRANGER));
+        assertFalse(forSale.allowsBuild(STRANGER));
+        assertFalse(forSale.allowsUse(STRANGER));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void ownerIsRequired() {
-        new Claim(1L, null, "world", new Bounds(0, 1, 0, 1), false, true, false, Collections.<String, TerrenoRole>emptyMap());
+        new Claim(1L, null, "world", new Bounds(0, 1, 0, 1), false, true, false, false, Collections.<String, TerrenoRole>emptyMap());
     }
 }

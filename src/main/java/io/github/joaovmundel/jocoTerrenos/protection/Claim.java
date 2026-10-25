@@ -19,10 +19,11 @@ public final class Claim {
     private final boolean pvp;
     private final boolean mobs;
     private final boolean publicAccess;
+    private final boolean forSale;
     private final Map<String, TerrenoRole> members;
 
     public Claim(long id, String ownerKey, String world, Bounds bounds, boolean pvp, boolean mobs,
-                 boolean publicAccess, Map<String, TerrenoRole> members) {
+                 boolean publicAccess, boolean forSale, Map<String, TerrenoRole> members) {
         if (ownerKey == null || world == null || bounds == null) {
             throw new IllegalArgumentException("ownerKey, world and bounds are required");
         }
@@ -33,7 +34,8 @@ public final class Claim {
         this.pvp = pvp;
         this.mobs = mobs;
         this.publicAccess = publicAccess;
-        this.members = Collections.unmodifiableMap(new HashMap<String, TerrenoRole>(members));
+        this.forSale = forSale;
+        this.members =Collections.unmodifiableMap(new HashMap<String, TerrenoRole>(members));
     }
 
     /** Owner, ADMIN and MEMBER may build, break and open containers. */
@@ -51,10 +53,11 @@ public final class Claim {
 
     /**
      * Whether the player may stand inside the land: owner and members always, everyone else only while the
-     * land is public. A private land keeps visitors out entirely, not just away from the blocks.
+     * land is public or for sale (someone has to be able to look at what they are about to buy). A private land
+     * keeps visitors out entirely, not just away from the blocks.
      */
     public boolean allowsEntry(String playerKey) {
-        return publicAccess || allowsBuild(playerKey);
+        return publicAccess || forSale || allowsBuild(playerKey);
     }
 
     public long getId() {
@@ -83,5 +86,9 @@ public final class Claim {
 
     public boolean isPublicAccess() {
         return publicAccess;
+    }
+
+    public boolean isForSale() {
+        return forSale;
     }
 }

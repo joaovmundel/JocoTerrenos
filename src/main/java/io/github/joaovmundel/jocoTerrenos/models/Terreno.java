@@ -2,6 +2,7 @@ package io.github.joaovmundel.jocoTerrenos.models;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,5 +20,7 @@ public class Terreno {
     private Boolean pvp;
     private Boolean mobs;
     private Boolean publicAccess;
+    /** Asking price in the server currency, or {@code null} when the land is not for sale. */
+    private BigDecimal salePrice;
     private List<TerrenoMember> members = new ArrayList<TerrenoMember>();
 }

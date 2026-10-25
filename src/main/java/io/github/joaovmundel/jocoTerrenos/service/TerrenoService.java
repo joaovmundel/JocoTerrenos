@@ -16,8 +16,10 @@ import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -25,6 +27,12 @@ import java.util.logging.Logger;
  * {@link ClaimIndex}, and the few reads and writes that reach the database are single indexed statements.
  */
 public class TerrenoService {
+
+    /** Longest name a player may give a land. */
+    public static final int MAX_NAME_LENGTH = 15;
+
+    private static final String DEFAULT_MAX_SALE_PRICE = "1000000000";
+    private static final int MAX_NAME_SUFFIX = 99;
 
     private final TerrenoRepository repository;
     private final FileConfiguration config;
@@ -279,6 +287,145 @@ public class TerrenoService {
             throw new TerrenoNotFoundException("land " + claim.getId() + " is indexed but missing from storage");
         }
         return terreno;
+    }
+
+    /** Outcome of putting a land up for sale or taking it off the market. */
+    public enum SaleResult {
+        OK, NOT_OWNER, NOT_LISTED, SAVE_FAILED
+    }
+
+    /** Largest price a land may be listed for ({@code lands.sale.max-price}). */
+    public BigDecimal getPrecoMaximoVenda() {
+        String configured = config.getString("lands.sale.max-price", DEFAULT_MAX_SALE_PRICE);
+        try {
+            BigDecimal max = new BigDecimal(configured.trim());
+            if (max.signum() > 0) {
+                return max;
+            }
+        } catch (NumberFormatException e) {
+            logger.log(Level.WARNING, "Valor invalido em lands.sale.max-price: '" + configured + "'; usando " + DEFAULT_MAX_SALE_PRICE, e);
+        }
+        return new BigDecimal(DEFAULT_MAX_SALE_PRICE);
+    }
+
+    /** The amount the way the server economy shows money. */
+    public String formatarPreco(BigDecimal preco) {
+        return formatarPreco(preco.doubleValue());
+    }
+
+    public String formatarPreco(double preco) {
+        return economy.format(preco);
+    }
+
+    /** Lists the land for sale, or changes its asking price when it already is. */
+    public SaleResult colocarAVenda(String donoNome, String nome, BigDecimal preco) throws TerrenoNotFoundException {
+        Terreno terreno = buscarTerrenoPorNome(donoNome, nome);
+        if (!isDono(terreno, donoNome)) {
+            return SaleResult.NOT_OWNER;
+        }
+        terreno.setSalePrice(preco);
+        return saveSale(terreno);
+    }
+
+    public SaleResult cancelarVenda(String donoNome, String nome) throws TerrenoNotFoundException {
+        Terreno terreno = buscarTerrenoPorNome(donoNome, nome);
+        if (!isDono(terreno, donoNome)) {
+            return SaleResult.NOT_OWNER;
+        }
+        if (terreno.getSalePrice() == null) {
+            return SaleResult.NOT_LISTED;
+        }
+        terreno.setSalePrice(null);
+        return saveSale(terreno);
+    }
+
+    private SaleResult saveSale(Terreno terreno) {
+        if (!repository.update(terreno)) {
+            return SaleResult.SAVE_FAILED;
+        }
+        indexClaim(terreno);
+        return SaleResult.OK;
+    }
+
+    /** The cheapest lands that are for sale. */
+    public List<Terreno> listarAVenda(int limite) {
+        return repository.findForSale(limite);
+    }
+
+    /**
+     * Buys a land another player put up for sale. The buyer pays the asking price to the seller, the land changes
+     * hands with its members removed and becomes private, and it is no longer for sale. If the buyer already has a
+     * land with the same name the new one gets a number appended.
+     * <p>
+     * Money and storage cannot be one transaction, so every step that fails undoes the ones before it.
+     */
+    public PurchaseOutcome adquirir(Player comprador, Terreno terreno) {
+        BigDecimal preco = terreno.getSalePrice();
+        if (preco == null) {
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.NOT_FOR_SALE, null);
+        }
+        String compradorKey = PlayerKeys.of(comprador);
+        if (isDono(terreno, compradorKey)) {
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.OWN_LAND, preco);
+        }
+        if (!economy.isAvailable()) {
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.ECONOMY_UNAVAILABLE, preco);
+        }
+        double valor = preco.doubleValue();
+        if (!economy.has(comprador.getName(), valor)) {
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.INSUFFICIENT_FUNDS, preco);
+        }
+        String novoNome = nomeLivreParaDono(compradorKey, terreno.getName());
+        if (novoNome == null) {
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.NAME_IN_USE, preco);
+        }
+
+        String vendedor = terreno.getDonoNome();
+        if (!economy.withdraw(comprador.getName(), valor)) {
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.PAYMENT_FAILED, preco);
+        }
+        if (!economy.deposit(vendedor, valor)) {
+            if (!economy.deposit(comprador.getName(), valor)) {
+                logger.severe("Falha ao devolver " + valor + " para " + comprador.getName()
+                        + " depois que o pagamento a " + vendedor + " falhou. Devolva o valor manualmente.");
+            }
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.PAYMENT_FAILED, preco);
+        }
+
+        String nomeAnterior = terreno.getName();
+        terreno.setDonoNome(compradorKey);
+        terreno.setName(novoNome);
+        terreno.setSalePrice(null);
+        terreno.setPublicAccess(false);
+        if (!repository.transferOwnership(terreno)) {
+            boolean recuperado = economy.withdraw(vendedor, valor);
+            boolean devolvido = economy.deposit(comprador.getName(), valor);
+            if (!recuperado || !devolvido) {
+                logger.severe("Falha ao desfazer a venda do terreno " + terreno.getId() + ": " + valor + " de " + vendedor
+                        + " para " + comprador.getName() + " (recuperado=" + recuperado + ", devolvido=" + devolvido
+                        + "). Confira os saldos manualmente.");
+            }
+            return PurchaseOutcome.failure(PurchaseOutcome.Status.SAVE_FAILED, preco);
+        }
+        indexClaim(terreno);
+        return PurchaseOutcome.success(terreno, preco, vendedor, nomeAnterior);
+    }
+
+    /** The name itself when the owner has no land called that, else the name with 2, 3... appended; null if all taken. */
+    private String nomeLivreParaDono(String donoNome, String nome) {
+        if (!repository.existsByOwnerAndName(donoNome, nome)) {
+            return nome;
+        }
+        for (int numero = 2; numero <= MAX_NAME_SUFFIX; numero++) {
+            String sufixo = String.valueOf(numero);
+            String base = nome.length() + sufixo.length() > MAX_NAME_LENGTH
+                    ? nome.substring(0, MAX_NAME_LENGTH - sufixo.length())
+                    : nome;
+            if (!repository.existsByOwnerAndName(donoNome, base + sufixo)) {
+                return base + sufixo;
+            }
+        }
+        return null;
     }
 
     /**

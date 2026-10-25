@@ -42,6 +42,9 @@ lands:
   min-size: 5
   # Minimum spacing between lands (in blocks)
   spacing-between-lands: 3
+  # Highest price a player may ask when putting a land up for sale (/terreno vender)
+  sale:
+    max-price: 1000000000
   # Price per block for land purchase
   block-price: 1000.0
   # Material for placed fences (FENCE or NETHER_FENCE)

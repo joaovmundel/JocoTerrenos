@@ -1,6 +1,7 @@
 package io.github.joaovmundel.jocoTerrenos.database;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -20,6 +21,7 @@ public final class Schema {
     private Schema() {
     }
 
+    /** Creates the tables that are missing and brings the existing ones up to the current columns. */
     public static void create(Connection connection, Dialect dialect) throws SQLException {
         Statement statement = connection.createStatement();
         try {
@@ -30,6 +32,36 @@ public final class Schema {
             }
         } finally {
             statement.close();
+        }
+        migrate(connection);
+    }
+
+    /**
+     * Columns added after the first release. CREATE TABLE IF NOT EXISTS leaves an old table untouched, so a
+     * database created by an earlier version gets them here, keeping its rows.
+     */
+    private static void migrate(Connection connection) throws SQLException {
+        addColumnIfMissing(connection, "terrenos", "sale_price_cents", "BIGINT");
+    }
+
+    private static void addColumnIfMissing(Connection connection, String table, String column, String type) throws SQLException {
+        if (hasColumn(connection, table, column)) {
+            return;
+        }
+        Statement statement = connection.createStatement();
+        try {
+            statement.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
+        } finally {
+            statement.close();
+        }
+    }
+
+    private static boolean hasColumn(Connection connection, String table, String column) throws SQLException {
+        ResultSet columns = connection.getMetaData().getColumns(connection.getCatalog(), null, table, column);
+        try {
+            return columns.next();
+        } finally {
+            columns.close();
         }
     }
 
@@ -45,7 +77,8 @@ public final class Schema {
                 + "mobs BOOLEAN NOT NULL DEFAULT 1, "
                 + "public_access BOOLEAN NOT NULL DEFAULT 0, "
                 + "created_at BIGINT NOT NULL, "
-                + "updated_at BIGINT NOT NULL)");
+                + "updated_at BIGINT NOT NULL, "
+                + "sale_price_cents BIGINT)");
         statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_name_key ON terrenos(db_name_key)");
         statement.execute("CREATE INDEX IF NOT EXISTS idx_dono_nome ON terrenos(dono_nome)");
         statement.execute("CREATE TABLE IF NOT EXISTS terreno_members ("
@@ -72,6 +105,7 @@ public final class Schema {
                 + "public_access BOOLEAN NOT NULL DEFAULT 0, "
                 + "created_at BIGINT NOT NULL, "
                 + "updated_at BIGINT NOT NULL, "
+                + "sale_price_cents BIGINT NULL, "
                 + "UNIQUE KEY uk_name_key (db_name_key), "
                 + "INDEX idx_dono_nome (dono_nome)"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8");

@@ -4,6 +4,8 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
+import java.util.Locale;
+
 /**
  * Vault backed {@link EconomyGateway}. The economy is looked up on every call, so it does not matter whether
  * the economy plugin enabled before or after this one, and a reloaded economy is picked up.
@@ -31,6 +33,13 @@ public final class VaultEconomyGateway implements EconomyGateway {
     public boolean deposit(String playerName, double amount) {
         Economy economy = economy();
         return economy != null && economy.depositPlayer(playerName, amount).transactionSuccess();
+    }
+
+    @Override
+    public String format(double amount) {
+        Economy economy = economy();
+        String formatted = economy != null ? economy.format(amount) : null;
+        return formatted != null ? formatted : String.format(Locale.ENGLISH, "%.2f", amount);
     }
 
     private static Economy economy() {

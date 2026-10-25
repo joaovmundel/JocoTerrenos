@@ -16,4 +16,7 @@ public interface EconomyGateway {
 
     /** @return whether the amount was given */
     boolean deposit(String playerName, double amount);
+
+    /** @return the amount the way the server economy shows money; two decimals if there is no economy */
+    String format(double amount);
 }

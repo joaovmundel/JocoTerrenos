@@ -23,9 +23,10 @@ import java.util.Locale;
 public class TerrenoCommand implements CommandExecutor, TabCompleter {
 
     private static final String PERMISSION = "jocoterrenos.terreno";
-    private static final int MAX_NAME_LENGTH = 15;
+    private static final int MAX_NAME_LENGTH = TerrenoService.MAX_NAME_LENGTH;
     private static final int[] SUGGESTED_SIZES = {5, 10, 15, 20, 25, 30, 50, 100};
-    private static final List<String> SUB_COMMANDS = Arrays.asList("comprar", "preco", "listar", "info", "deletar", "pvp", "mobs", "publico", "tp");
+    private static final List<String> SUB_COMMANDS = Arrays.asList("comprar", "preco", "listar", "info", "deletar", "pvp", "mobs", "publico", "tp",
+            "vender", "cancelarvenda", "adquirir", "vendas");
 
     private enum Toggle {
         PVP, MOBS, PUBLICO
@@ -34,10 +35,12 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
     private final JocoLogging logger = new JocoLogging(this.getClass().getName());
     private final JocoTerrenos plugin;
     private final TerrenoService terrenoService;
+    private final SaleSubCommands sales;
 
     public TerrenoCommand(JocoTerrenos plugin) {
         this.terrenoService = plugin.getTerrenoService();
         this.plugin = plugin;
+        this.sales = new SaleSubCommands(plugin);
     }
 
     @Override
@@ -77,6 +80,8 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             return handleTp(player, args);
         } else if (subCommand.equals("preco")) {
             return handlePreco(player, args);
+        } else if (sales.execute(player, subCommand, args)) {
+            return true;
         }
         sendHelp(player);
         return true;
@@ -120,7 +125,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         }
 
         double custo = terrenoService.calcularCustoTerreno(tamanho);
-        messages.send(player, "terreno.comprar.preco", MessageService.placeholders("price", String.format("%.2f", custo)));
+        messages.send(player, "terreno.comprar.preco", MessageService.placeholders("price", terrenoService.formatarPreco(custo)));
 
         Terreno created = terrenoService.criarTerreno(player, tamanho, nome);
         if (created == null) {
@@ -157,13 +162,16 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         for (Terreno terreno : terrenos) {
             String pvp = terreno.getPvp() ? messages.get("status.on") : messages.get("status.off");
             String mobs = terreno.getMobs() ? messages.get("status.on") : messages.get("status.off");
+            String sale = terreno.getSalePrice() == null ? "" : messages.format("terreno.listar.venda",
+                    MessageService.placeholders("price", terrenoService.formatarPreco(terreno.getSalePrice())));
             player.sendMessage(messages.format("terreno.listar.linha",
                     MessageService.placeholders(
                             "id", terreno.getId(),
                             "name", terreno.getName(),
                             "size", terreno.getSize(),
                             "pvp", pvp,
-                            "mobs", mobs
+                            "mobs", mobs,
+                            "sale", sale
                     )));
         }
 
@@ -193,6 +201,10 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(messages.format("terreno.info.mobs", MessageService.placeholders("mobs", statusHabilitado(t.getMobs()))));
         player.sendMessage(messages.format("terreno.info.publico", MessageService.placeholders("public", t.getPublicAccess() ? messages.get("status.sim") : messages.get("status.nao"))));
         player.sendMessage(messages.format("terreno.info.membros", MessageService.placeholders("count", t.getMembers().size())));
+        String sale = t.getSalePrice() == null
+                ? messages.get("terreno.info.venda-nao")
+                : messages.format("terreno.info.venda-sim", MessageService.placeholders("price", terrenoService.formatarPreco(t.getSalePrice())));
+        player.sendMessage(messages.format("terreno.info.venda", MessageService.placeholders("sale", sale)));
     }
 
     private String statusHabilitado(boolean enabled) {
@@ -331,7 +343,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             double custo = terrenoService.calcularCustoTerreno(tamanho);
-            messages.send(player, "terreno.preco.valor", MessageService.placeholders("size", tamanho, "price", String.format("%.2f", custo)));
+            messages.send(player, "terreno.preco.valor", MessageService.placeholders("size", tamanho, "price", terrenoService.formatarPreco(custo)));
         } catch (NumberFormatException e) {
             messages.send(player, "invalid-number");
         }
@@ -351,6 +363,9 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
         }
         Player player = (Player) sender;
 
+        if (args.length >= 2 && SaleSubCommands.handles(args[0])) {
+            return sales.complete(player, args);
+        }
         if (args.length == 1) {
             String prefix = args[0].toLowerCase(Locale.ENGLISH);
             for (String sub : SUB_COMMANDS) {

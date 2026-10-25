@@ -18,7 +18,7 @@ public class ClaimIndexTest {
     private ClaimIndex index;
 
     private static Claim claim(long id, String world, Bounds bounds) {
-        return new Claim(id, "owner-" + id, world, bounds, false, true, false, Collections.<String, TerrenoRole>emptyMap());
+        return new Claim(id, "owner-" + id, world, bounds, false, true, false, false, Collections.<String, TerrenoRole>emptyMap());
     }
 
     @Before

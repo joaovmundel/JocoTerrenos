@@ -39,6 +39,7 @@ public final class ClaimMapper {
                 Boolean.TRUE.equals(terreno.getPvp()),
                 Boolean.TRUE.equals(terreno.getMobs()),
                 Boolean.TRUE.equals(terreno.getPublicAccess()),
+                terreno.getSalePrice() != null,
                 membersOf(terreno));
     }
 
