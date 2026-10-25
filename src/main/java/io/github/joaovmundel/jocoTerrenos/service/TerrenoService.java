@@ -28,16 +28,14 @@ public class TerrenoService {
 
     private final TerrenoRepository repository;
     private final FileConfiguration config;
-    private final MessageService messages;
     private final ClaimIndex claimIndex;
     private final EconomyGateway economy;
     private final Logger logger;
 
-    public TerrenoService(TerrenoRepository repository, FileConfiguration config, MessageService messages,
+    public TerrenoService(TerrenoRepository repository, FileConfiguration config,
                           ClaimIndex claimIndex, EconomyGateway economy, Logger logger) {
         this.repository = repository;
         this.config = config;
-        this.messages = messages;
         this.claimIndex = claimIndex;
         this.economy = economy;
         this.logger = logger;
@@ -157,11 +155,11 @@ public class TerrenoService {
 
     public Terreno buscarTerrenoPorNome(String donoNome, String nome) throws TerrenoNotFoundException {
         if (nome == null || nome.trim().isEmpty()) {
-            throw new TerrenoNotFoundException(messages.get("errors.terreno.nome-invalido"));
+            throw new TerrenoNotFoundException("land name is empty");
         }
         Terreno terreno = repository.findByNameKey(TerrenoRepository.nameKey(donoNome, nome));
         if (terreno == null) {
-            throw new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado"));
+            throw new TerrenoNotFoundException("no land named '" + nome.trim() + "' for " + donoNome);
         }
         return terreno;
     }
@@ -274,11 +272,11 @@ public class TerrenoService {
         Claim claim = playerLoc.getWorld() == null ? null
                 : claimIndex.findAt(playerLoc.getWorld().getName(), playerLoc.getBlockX(), playerLoc.getBlockZ());
         if (claim == null) {
-            throw new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado"));
+            throw new TerrenoNotFoundException("player is not standing on a land");
         }
         Terreno terreno = repository.findById(claim.getId());
         if (terreno == null) {
-            throw new TerrenoNotFoundException(messages.get("errors.terreno.nao-encontrado"));
+            throw new TerrenoNotFoundException("land " + claim.getId() + " is indexed but missing from storage");
         }
         return terreno;
     }

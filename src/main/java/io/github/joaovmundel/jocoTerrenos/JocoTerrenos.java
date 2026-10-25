@@ -60,7 +60,7 @@ public final class JocoTerrenos extends JavaPlugin {
         // Inicializa os services
         claimIndex = new ClaimIndex();
         EconomyGateway economy = new VaultEconomyGateway();
-        terrenoService = new TerrenoService(terrenoRepository, getConfig(), messageService, claimIndex, economy, getLogger());
+        terrenoService = new TerrenoService(terrenoRepository, getConfig(), claimIndex, economy, getLogger());
         try {
             terrenoService.reloadClaims();
         } catch (StorageException e) {

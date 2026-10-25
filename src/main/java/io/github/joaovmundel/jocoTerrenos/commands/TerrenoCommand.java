@@ -223,7 +223,6 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             }
         } catch (TerrenoNotFoundException e) {
             messages.send(player, "terreno.info.nao-encontrado");
-            logger.warning(e.getMessage());
         }
 
         return true;
@@ -279,8 +278,7 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             }
             messages.send(player, "terreno.toggle.sucesso", MessageService.placeholders("name", nome));
         } catch (TerrenoNotFoundException e) {
-            messages.send(player, "terreno.toggle.erro");
-            logger.warning(e.getMessage());
+            messages.send(player, "terreno.info.nao-encontrado");
         }
 
         return true;
@@ -309,7 +307,6 @@ public class TerrenoCommand implements CommandExecutor, TabCompleter {
             }
         } catch (TerrenoNotFoundException e) {
             messages.send(player, "terreno.info.nao-encontrado");
-            logger.warning("[JocoTerrenos] TerrenoCommand: " + e.getMessage());
         }
         return true;
     }
